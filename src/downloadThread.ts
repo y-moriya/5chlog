@@ -43,5 +43,5 @@ export async function downloadThread(
   console.log("end download");
   await sleep(3000);
 
-  return thread.messages[0].message.match(THREAD_URL_REGEX) || [];
+  return thread.messages[0]?.message.match(THREAD_URL_REGEX) || [];
 }

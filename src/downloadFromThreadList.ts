@@ -1,6 +1,6 @@
 import { createDirectoryIfNotExists } from "./utils.ts";
 import { Thread } from "./types.ts";
-import { parse } from "./deps.ts";
+import { parse } from "../deps.ts";
 import { basename, extname } from "https://deno.land/std/path/mod.ts";
 import { downloadThread } from "./downloadThread.ts";
 

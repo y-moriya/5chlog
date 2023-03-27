@@ -1,4 +1,4 @@
-import { DOMParser, Element } from "./deps.ts";
+import { DOMParser, Element } from "../deps.ts";
 import { Message } from "./types.ts";
 
 /**

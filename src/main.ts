@@ -1,8 +1,5 @@
-import {
-  createDirectoryIfNotExists,
-  THREAD_URL_REGEX,
-} from "./utils.ts";
-import { parse } from "./deps.ts";
+import { createDirectoryIfNotExists, THREAD_URL_REGEX } from "./utils.ts";
+import { parse } from "../deps.ts";
 import { downloadThread } from "./downloadThread.ts";
 
 /**
