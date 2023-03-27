@@ -144,6 +144,7 @@ Deno.test("readJsonFilesInDir function", async () => {
 Deno.test("merge function", async () => {
   const testDir = "threads/testThreads";
   const testOutputDir = "merged";
+  Deno.mkdir("merged", { recursive: true });
   const testOutputFile = `${testOutputDir}/testThreads.json`;
 
   // 1. Create test directory and data
