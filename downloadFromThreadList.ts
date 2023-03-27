@@ -2,6 +2,7 @@ import { createDirectoryIfNotExists, parseThreadHTML, sleep } from "./utils.ts";
 import { Thread } from "./types.ts";
 import { parse } from "./deps.ts";
 import { basename, extname } from "https://deno.land/std/path/mod.ts";
+import { downloadThread } from "./downloadThread.ts";
 
 async function main() {
   const args = parse(Deno.args);
@@ -23,23 +24,7 @@ async function main() {
   const threads: Thread[] = JSON.parse(decoder.decode(file));
 
   for (const thread of threads) {
-    console.log(`start download ${thread.title}`);
-    const response = await fetch(thread.url);
-    const arrayBuffer = await response.arrayBuffer();
-    const html = new TextDecoder("shift-jis").decode(arrayBuffer);
-    thread.messages = parseThreadHTML(html);
-    const regex = /(\d+)\/?$/;
-    const match = thread.url.match(regex);
-    if (match) {
-      const path = `${dist}/${match[1]}.json`;
-      Deno.writeTextFileSync(path, JSON.stringify(thread));
-    } else {
-      console.log("No thread id found");
-      Deno.exit(1);
-    }
-
-    console.log("end download");
-    await sleep(3000);
+    downloadThread(thread.url, dist);
   }
 }
 

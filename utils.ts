@@ -45,3 +45,19 @@ export async function createDirectoryIfNotExists(dirPath: string) {
     }
   }
 }
+
+export async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    const fileInfo = await Deno.stat(filePath);
+    return fileInfo.isFile;
+  } catch (error) {
+    if (error instanceof Deno.errors.NotFound) {
+      return false;
+    } else {
+      throw error;
+    }
+  }
+}
+
+export const THREAD_URL_REGEX =
+  /(https:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
