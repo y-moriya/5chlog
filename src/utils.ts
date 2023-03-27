@@ -1,5 +1,6 @@
-import { DOMParser, Element } from "../deps.ts";
-import { Message } from "./types.ts";
+import { DOMParser, Element, join } from "../deps.ts";
+import { downloadThread } from "./downloadThread.ts";
+import { Message, Thread } from "./types.ts";
 
 /**
  * 指定したミリ秒処理をスリープする
@@ -76,6 +77,69 @@ export async function fileExists(filePath: string): Promise<boolean> {
       throw error;
     }
   }
+}
+
+/**
+ * 指定したディレクトリの json ファイルからデータを全て読み込む
+ * @param dirPath 対象のディレクトリ
+ * @returns JSON.parse した結果の配列
+ */
+export async function readJsonFilesInDir(dirPath: string) {
+  const jsonFiles: Thread[] = [];
+
+  for await (const entry of Deno.readDir(dirPath)) {
+    if (entry.isFile && entry.name.endsWith(".json")) {
+      const filePath = join(dirPath, entry.name);
+      const jsonContent = await Deno.readTextFile(filePath);
+      const jsonData = JSON.parse(jsonContent);
+      jsonFiles.push(jsonData);
+    }
+  }
+
+  return jsonFiles;
+}
+
+/**
+ * 指定したディレクトリの json ファイルに含まれる message をマージして一つの json に出力する
+ * @param dir 対象のディレクトリ
+ */
+export async function merge(dir: string) {
+  const dirPath = `threads/${dir}`;
+  const jsonFilesData = await readJsonFilesInDir(dirPath);
+  const allMes: Message[] = [];
+  for (const thread of jsonFilesData) {
+    allMes.push(...thread.messages!);
+  }
+  // TODO: date をパースして昇順に並べる
+  Deno.writeTextFileSync(`merged/${dir}.json`, JSON.stringify(allMes));
+}
+
+/**
+ * スレッドを前スレ情報を辿りながらそれぞれの書き込みをJSONファイルに出力する
+ * @param url 対象のスレッドURL
+ * @param dist JSONファイル保存先のパス
+ * @param collectedUrls 再起呼び出しに使用する現在保持しているURL群
+ * @param downloadFn スレッドをダウンロードし、前スレッドのURLを返却する関数
+ * @returns
+ */
+export async function downloadThreadsRecursively(
+  url: string,
+  dist: string,
+  collectedUrls: Set<string> = new Set(),
+  downloadFn: (url: string, dist: string) => Promise<string[]> = downloadThread,
+): Promise<Set<string>> {
+  if (collectedUrls.has(url)) {
+    return collectedUrls;
+  }
+
+  collectedUrls.add(url);
+  const urls = await downloadFn(url, dist);
+
+  for (const nextUrl of urls) {
+    await downloadThreadsRecursively(nextUrl, dist, collectedUrls, downloadFn);
+  }
+
+  return collectedUrls;
 }
 
 /**

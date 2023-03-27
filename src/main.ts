@@ -1,32 +1,9 @@
-import { createDirectoryIfNotExists, THREAD_URL_REGEX } from "./utils.ts";
+import {
+  createDirectoryIfNotExists,
+  downloadThreadsRecursively,
+  THREAD_URL_REGEX,
+} from "./utils.ts";
 import { parse } from "../deps.ts";
-import { downloadThread } from "./downloadThread.ts";
-
-/**
- * スレッドを前スレ情報を辿りながらそれぞれの書き込みをJSONファイルに出力する
- * @param url 対象のスレッドURL
- * @param dist JSONファイル保存先のパス
- * @param collectedUrls 再起呼び出しに使用する現在保持しているURL群
- * @returns
- */
-async function downloadThreadsRecursively(
-  url: string,
-  dist: string,
-  collectedUrls: Set<string> = new Set(),
-): Promise<Set<string>> {
-  if (collectedUrls.has(url)) {
-    return collectedUrls;
-  }
-
-  collectedUrls.add(url);
-  const urls = await downloadThread(url, dist);
-
-  for (const nextUrl of urls) {
-    await downloadThreadsRecursively(nextUrl, dist, collectedUrls);
-  }
-
-  return collectedUrls;
-}
 
 async function main() {
   const args = parse(Deno.args);
