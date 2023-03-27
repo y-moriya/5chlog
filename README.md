@@ -1,5 +1,7 @@
 # 5ch log downloader
 
+[![Deno Test](https://github.com/y-moriya/5chlog/actions/workflows/deno_test.yml/badge.svg)](https://github.com/y-moriya/5chlog/actions/workflows/deno_test.yml)
+
 ## Usage
 
 main.ts にスレッドURLとユニークな名称を渡して実行する。
