@@ -1,7 +1,6 @@
 import { createDirectoryIfNotExists } from "./utils.ts";
 import { Thread } from "./types.ts";
-import { parse } from "../deps.ts";
-import { basename, extname } from "https://deno.land/std/path/mod.ts";
+import { basename, extname, parse } from "../deps.ts";
 import { downloadThread } from "./downloadThread.ts";
 
 async function main() {
@@ -24,7 +23,7 @@ async function main() {
   const threads: Thread[] = JSON.parse(decoder.decode(file));
 
   for (const thread of threads) {
-    downloadThread(thread.url, dist);
+    await downloadThread(thread.url, dist);
   }
 }
 

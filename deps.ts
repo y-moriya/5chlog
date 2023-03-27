@@ -1,11 +1,22 @@
 import {
   DOMParser,
   Element,
-} from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
-import { parse } from "https://deno.land/std/flags/mod.ts";
+} from "https://deno.land/x/deno_dom@v0.1.37/deno-dom-wasm.ts";
+import { parse } from "https://deno.land/std@0.181.0/flags/mod.ts";
 import {
   assert,
   assertEquals,
 } from "https://deno.land/std@0.181.0/testing/asserts.ts";
+import { join } from "https://deno.land/std@0.181.0/path/mod.ts";
+import { basename, extname } from "https://deno.land/std@0.181.0/path/mod.ts";
 
-export { assert, assertEquals, DOMParser, Element, parse };
+export {
+  assert,
+  assertEquals,
+  basename,
+  DOMParser,
+  Element,
+  extname,
+  join,
+  parse,
+};
