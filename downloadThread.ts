@@ -5,7 +5,12 @@ import {
   THREAD_URL_REGEX,
 } from "./utils.ts";
 
-// スレッドのコメントすべてを json ファイルに出力し、前スレ候補のURLの配列を返す
+/**
+ * スレッドのコメントすべてを json ファイルに出力し、前スレ候補のURLの配列を返す
+ * @param url 対象のスレッドURL
+ * @param dist 保存先のパス
+ * @returns 前スレ候補のURLの配列
+ */
 export async function downloadThread(
   url: string,
   dist: string,

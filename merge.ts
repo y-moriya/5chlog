@@ -2,6 +2,11 @@ import { Message, Thread } from "./types.ts";
 import { join } from "https://deno.land/std/path/mod.ts";
 import { parse } from "https://deno.land/std/flags/mod.ts";
 
+/**
+ * 指定したディレクトリの json ファイルからデータを全て読み込みます
+ * @param dirPath 対象のディレクトリ
+ * @returns JSON.parse した結果の配列
+ */
 async function readJsonFilesInDir(dirPath: string) {
   const jsonFiles: Thread[] = [];
 

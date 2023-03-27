@@ -1,10 +1,20 @@
 import { DOMParser, Element } from "./deps.ts";
 import { Message } from "./types.ts";
 
+/**
+ * 指定したミリ秒処理をスリープする
+ * @param ms ミリ秒
+ * @returns msミリ秒経過後に解決されるPromise
+ */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * 5chのスレッドHTMLから各書き込みをパースして配列にして返却する
+ * @param html 5chのスレッドHTML
+ * @returns メッセージオブジェクトの配列
+ */
 export function parseThreadHTML(html: string): Message[] {
   const doc = new DOMParser().parseFromString(html, "text/html")!;
   const posts = doc.querySelectorAll(".post");
@@ -34,6 +44,10 @@ export function parseThreadHTML(html: string): Message[] {
   return messages;
 }
 
+/**
+ * ディレクトリが存在しない場合作成する
+ * @param dirPath 対象のディレクトリ
+ */
 export async function createDirectoryIfNotExists(dirPath: string) {
   try {
     await Deno.stat(dirPath);
@@ -46,6 +60,11 @@ export async function createDirectoryIfNotExists(dirPath: string) {
   }
 }
 
+/**
+ * ファイルが存在するかどうかを判定する
+ * @param filePath 対象のファイルパス
+ * @returns ファイルが存在すれば true
+ */
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
     const fileInfo = await Deno.stat(filePath);
@@ -59,5 +78,8 @@ export async function fileExists(filePath: string): Promise<boolean> {
   }
 }
 
+/**
+ * 5chのスレッドURLにマッチする正規表現
+ */
 export const THREAD_URL_REGEX =
   /(https:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;

@@ -1,13 +1,17 @@
 import {
   createDirectoryIfNotExists,
-  fileExists,
-  parseThreadHTML,
-  sleep,
   THREAD_URL_REGEX,
 } from "./utils.ts";
 import { parse } from "./deps.ts";
 import { downloadThread } from "./downloadThread.ts";
 
+/**
+ * スレッドを前スレ情報を辿りながらそれぞれの書き込みをJSONファイルに出力する
+ * @param url 対象のスレッドURL
+ * @param dist JSONファイル保存先のパス
+ * @param collectedUrls 再起呼び出しに使用する現在保持しているURL群
+ * @returns
+ */
 async function downloadThreadsRecursively(
   url: string,
   dist: string,
