@@ -45,14 +45,18 @@ Deno.test("parseThreadHTML function", () => {
       "data-userid": "ID:M6l/2SqX0",
       "data-id": "1",
       name: "User 1",
-      date: "2023/03/18(土) 20:55:13.15",
+      dateStr: "2023/03/18(土) 20:55:13.150",
+      date: new Date("2023-03-18T11:55:13.150Z"),
+      time: 0,
       message: "Message 1\nLine 2",
     },
     {
       "data-userid": "ID:M6l/2SqX1",
       "data-id": "2",
       name: "User 2",
-      date: "2023/03/18(土) 20:56:14.16",
+      dateStr: "2023/03/18(土) 20:56:14.160",
+      date: new Date("2023-03-18T11:56:14.160Z"),
+      time: 0,
       message: "Message 2",
     },
   ];
@@ -157,7 +161,9 @@ Deno.test("merge function", async () => {
       "data-userid": "ID:s9ELLwns0",
       "data-id": "1",
       "name": "風吹けば名無し (８段) (ﾜｯﾁｮｲW 4336-H1yD)",
-      "date": "2023/03/23(木) 21:39:48.96",
+      "date": "2023-03-23T21:39:48.960Z",
+      "dateStr": "2023/03/23(木) 21:39:48.96",
+      "time": 0,
       "message":
         '!extend:checked:vvvvv:1000:512 \n ※前スレ \n 【実況】博衣こよりのえちえちぶらぼーん🧪 ★4 \n <a href="https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/">https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/</a> <hr>VIPQ2_EXTDAT: checked:vvvvv:1000:512:: EXT was configured',
     }],
@@ -167,7 +173,9 @@ Deno.test("merge function", async () => {
       "data-userid": "ID:c7pCjGTJ0",
       "data-id": "2",
       "name": "風吹けば名無し (ﾜｯﾁｮｲW eb9c-uZfV)",
-      "date": "2023/03/23(木) 21:40:10.14",
+      "date": "2023-03-23T21:40:10.140Z",
+      "dateStr": "2023/03/23(木) 21:40:10.14",
+      "time": 0,
       "message": "サンポル🥒",
     }],
   };
@@ -181,22 +189,25 @@ Deno.test("merge function", async () => {
   const outputJsonContent = await Deno.readTextFile(testOutputFile);
   const outputData = JSON.parse(outputJsonContent);
 
-  // 現状は入力の逆順で結合される
   assertEquals(outputData, [
-    {
-      "data-userid": "ID:c7pCjGTJ0",
-      "data-id": "2",
-      "name": "風吹けば名無し (ﾜｯﾁｮｲW eb9c-uZfV)",
-      "date": "2023/03/23(木) 21:40:10.14",
-      "message": "サンポル🥒",
-    },
     {
       "data-userid": "ID:s9ELLwns0",
       "data-id": "1",
       "name": "風吹けば名無し (８段) (ﾜｯﾁｮｲW 4336-H1yD)",
-      "date": "2023/03/23(木) 21:39:48.96",
+      "date": "2023-03-23T21:39:48.960Z",
+      "dateStr": "2023/03/23(木) 21:39:48.96",
+      "time": 0,
       "message":
         '!extend:checked:vvvvv:1000:512 \n ※前スレ \n 【実況】博衣こよりのえちえちぶらぼーん🧪 ★4 \n <a href="https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/">https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/</a> <hr>VIPQ2_EXTDAT: checked:vvvvv:1000:512:: EXT was configured',
+    },
+    {
+      "data-userid": "ID:c7pCjGTJ0",
+      "data-id": "2",
+      "name": "風吹けば名無し (ﾜｯﾁｮｲW eb9c-uZfV)",
+      "date": "2023-03-23T21:40:10.140Z",
+      "dateStr": "2023/03/23(木) 21:40:10.14",
+      "time": 21.18,
+      "message": "サンポル🥒",
     },
   ]);
 

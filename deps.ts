@@ -9,11 +9,13 @@ import {
 } from "https://deno.land/std@0.181.0/testing/asserts.ts";
 import { join } from "https://deno.land/std@0.181.0/path/mod.ts";
 import { basename, extname } from "https://deno.land/std@0.181.0/path/mod.ts";
+import { datetime } from "https://deno.land/x/ptera@v1.0.2/mod.ts";
 
 export {
   assert,
   assertEquals,
   basename,
+  datetime,
   DOMParser,
   Element,
   extname,

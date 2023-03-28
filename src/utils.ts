@@ -1,4 +1,4 @@
-import { DOMParser, Element, join } from "../deps.ts";
+import { datetime, DOMParser, Element, join } from "../deps.ts";
 import { downloadThread } from "./downloadThread.ts";
 import { Message, Thread } from "./types.ts";
 
@@ -22,24 +22,42 @@ export function parseThreadHTML(html: string): Message[] {
   const messages: Message[] = [];
 
   for (const post of posts) {
-    const p = post as Element;
-    const name = p.querySelector(".name")!;
-    const date = p.querySelector(".date")!;
-    const message = p.querySelector(".message")!;
-    const escapedSpan = message.querySelector(".escaped")!;
+    try {
+      const p = post as Element;
+      const name = p.querySelector(".name")!;
+      const date = p.querySelector(".date")!;
+      const message = p.querySelector(".message")!;
+      const escapedSpan = message.querySelector(".escaped")!;
 
-    // Replace <br> tags with \n
-    const messageText = escapedSpan.innerHTML.replace(/<br>/g, "\n").trim();
+      // Replace <br> tags with \n
+      const messageText = escapedSpan.innerHTML.replace(/<br>/g, "\n").trim();
 
-    const mes: Message = {
-      "data-userid": p.getAttribute("data-userid")!,
-      "data-id": p.getAttribute("data-id")!,
-      "name": name.textContent?.trim(),
-      "date": date.textContent?.trim(),
-      "message": messageText,
-    };
+      const dateStr = date.textContent?.trim() + "0"; // ptera はミリ秒を3桁で認識するので 0 で埋める
+      const dateObj = datetime().parse(dateStr, DATE_STRING_FORMAT, {
+        locale: "ja",
+      }).toJSDate();
 
-    messages.push(mes);
+      const mes: Message = {
+        "data-userid": p.getAttribute("data-userid")!,
+        "data-id": p.getAttribute("data-id")!,
+        "name": name.textContent?.trim(),
+        "dateStr": dateStr,
+        "date": dateObj,
+        "time": 0,
+        "message": messageText,
+      };
+
+      messages.push(mes);
+    } catch (error) {
+      if (error instanceof RangeError) {
+        console.warn(
+          "Message skipped caused by RangeError occurred:",
+          error.message,
+        );
+      } else {
+        throw error;
+      }
+    }
   }
 
   return messages;
@@ -84,7 +102,7 @@ export async function fileExists(filePath: string): Promise<boolean> {
  * @param dirPath 対象のディレクトリ
  * @returns JSON.parse した結果の配列
  */
-export async function readJsonFilesInDir(dirPath: string) {
+export async function readJsonFilesInDir(dirPath: string): Promise<Thread[]> {
   const jsonFiles: Thread[] = [];
 
   for await (const entry of Deno.readDir(dirPath)) {
@@ -110,8 +128,20 @@ export async function merge(dir: string) {
   for (const thread of jsonFilesData) {
     allMes.push(...thread.messages!);
   }
-  // TODO: date をパースして昇順に並べる
-  Deno.writeTextFileSync(`merged/${dir}.json`, JSON.stringify(allMes));
+  const sortedMessages = allMes.sort((a, b) => {
+    return new Date(a.date!).getTime() - new Date(b.date!).getTime()!;
+  });
+
+  // 最も古い日付のメッセージを起点とする
+  const referenceDate = new Date(sortedMessages[0].date!);
+
+  sortedMessages.forEach((message) => {
+    // 経過秒数を計算し、timeプロパティに格納
+    message.time =
+      (new Date(message.date!).getTime() - referenceDate.getTime()) / 1000;
+  });
+
+  Deno.writeTextFileSync(`merged/${dir}.json`, JSON.stringify(sortedMessages));
 }
 
 /**
@@ -147,3 +177,5 @@ export async function downloadThreadsRecursively(
  */
 export const THREAD_URL_REGEX =
   /(https:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
+
+export const DATE_STRING_FORMAT = "YYYY/MM/dd(www) HH:mm:ss.S";
