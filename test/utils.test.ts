@@ -198,7 +198,7 @@ Deno.test("merge function", async () => {
       "dateStr": "2023/03/23(木) 21:39:48.96",
       "time": 0,
       "message":
-        '!extend:checked:vvvvv:1000:512 \n ※前スレ \n 【実況】博衣こよりのえちえちぶらぼーん🧪 ★4 \n <a href="https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/">https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/</a> <hr>VIPQ2_EXTDAT: checked:vvvvv:1000:512:: EXT was configured',
+        '!extend:checked:vvvvv:1000:512 \n ※前スレ \n 【実況】博衣こよりのえちえちぶらぼーん🧪 ★4 \n https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/ <hr>VIPQ2_EXTDAT: checked:vvvvv:1000:512:: EXT was configured',
     },
     {
       "data-userid": "ID:c7pCjGTJ0",
@@ -206,7 +206,7 @@ Deno.test("merge function", async () => {
       "name": "風吹けば名無し (ﾜｯﾁｮｲW eb9c-uZfV)",
       "date": "2023-03-23T21:40:10.140Z",
       "dateStr": "2023/03/23(木) 21:40:10.14",
-      "time": 21.18,
+      "time": 21180,
       "message": "サンポル🥒",
     },
   ]);

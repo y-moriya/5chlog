@@ -137,11 +137,16 @@ export async function merge(dir: string) {
 
   sortedMessages.forEach((message) => {
     // 経過秒数を計算し、timeプロパティに格納
-    message.time =
-      (new Date(message.date!).getTime() - referenceDate.getTime()) / 1000;
+    message.time = new Date(message.date!).getTime() - referenceDate.getTime();
+    message.message = replaceAnchorLink(message.message);
   });
 
   Deno.writeTextFileSync(`merged/${dir}.json`, JSON.stringify(sortedMessages));
+}
+
+function replaceAnchorLink(text: string): string {
+  const rawText = text.replace(/<a[^>]*>([^<]*)<\/a>/gi, "$1");
+  return rawText.replaceAll("&gt;", ">");
 }
 
 /**
