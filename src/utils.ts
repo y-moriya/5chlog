@@ -138,15 +138,45 @@ export async function merge(dir: string) {
   sortedMessages.forEach((message) => {
     // 経過秒数を計算し、timeプロパティに格納
     message.time = new Date(message.date!).getTime() - referenceDate.getTime();
-    message.message = replaceAnchorLink(message.message);
+    // message.message = replaceAnchorLink(message.message);
+    // message.message = replaceSpan(message.message);
+    // タグを削除
+    message.message = replaceTags(message.message);
   });
 
-  Deno.writeTextFileSync(`merged/${dir}.json`, JSON.stringify(sortedMessages));
+  await Deno.writeTextFile(
+    `merged/${dir}.json`,
+    JSON.stringify(sortedMessages),
+  );
 }
 
-function replaceAnchorLink(text: string): string {
+export async function filter(title: string, from: Date, to: Date) {
+  const json = await Deno.readTextFile(`merged/${title}.json`);
+  const allMes: Message[] = JSON.parse(json);
+  const filteredMes = allMes.filter((mes) => {
+    return from <= new Date(mes.date!) && new Date(mes.date!) <= to;
+  });
+  filteredMes.forEach((mes) => {
+    mes.time = (new Date(mes.date!).getTime() - from.getTime()) / 10;
+  });
+
+  await Deno.writeTextFile(
+    `filtered/${title}.json`,
+    JSON.stringify(filteredMes),
+  );
+}
+
+export function replaceAnchorLink(text: string): string {
   const rawText = text.replace(/<a[^>]*>([^<]*)<\/a>/gi, "$1");
   return rawText.replaceAll("&gt;", ">");
+}
+
+export function replaceSpan(text: string): string {
+  return text.replace(/<span[^>]*>([^<]*)<\/span>/gi, "$1");
+}
+
+export function replaceTags(text: string): string {
+  return text.replace(/<\/?[^>]+(>|$)/g, "");
 }
 
 /**

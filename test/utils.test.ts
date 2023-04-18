@@ -7,6 +7,9 @@ import {
   merge,
   parseThreadHTML,
   readJsonFilesInDir,
+  replaceAnchorLink,
+  replaceSpan,
+  replaceTags,
   sleep,
 } from "../src/utils.ts";
 
@@ -198,7 +201,7 @@ Deno.test("merge function", async () => {
       "dateStr": "2023/03/23(木) 21:39:48.96",
       "time": 0,
       "message":
-        '!extend:checked:vvvvv:1000:512 \n ※前スレ \n 【実況】博衣こよりのえちえちぶらぼーん🧪 ★4 \n https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/ <hr>VIPQ2_EXTDAT: checked:vvvvv:1000:512:: EXT was configured',
+        "!extend:checked:vvvvv:1000:512 \n ※前スレ \n 【実況】博衣こよりのえちえちぶらぼーん🧪 ★4 \n https://eagle.5ch.net/test/read.cgi/livejupiter/1679572994/ VIPQ2_EXTDAT: checked:vvvvv:1000:512:: EXT was configured",
     },
     {
       "data-userid": "ID:c7pCjGTJ0",
@@ -245,4 +248,103 @@ Deno.test("downloadThreadsRecursively function", async () => {
 
   // Verify the function executed recursively and collected all URLs
   assertEquals(result, expectedResult);
+});
+
+Deno.test("replaceSpan removes span tags", () => {
+  const input = "This is a <span class=\"test\">test</span> string.";
+  const expectedOutput = "This is a test string.";
+
+  const result = replaceSpan(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceSpan doesn't remove other tags", () => {
+  const input = "This is a <div>div</div> and a <span>span</span>.";
+  const expectedOutput = "This is a <div>div</div> and a span.";
+
+  const result = replaceSpan(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceSpan doesn't affect text without span tags", () => {
+  const input = "This is a test string without span tags.";
+  const expectedOutput = input;
+
+  const result = replaceSpan(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceAnchorLink removes anchor tags", () => {
+  const input = "This is a <a href=\"https://example.com\">test</a> link.";
+  const expectedOutput = "This is a test link.";
+
+  const result = replaceAnchorLink(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceAnchorLink unescapes '&gt;' characters", () => {
+  const input = "This is a <a href=\"https://example.com\">&gt;&gt;test</a> link.";
+  const expectedOutput = "This is a >>test link.";
+
+  const result = replaceAnchorLink(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceAnchorLink doesn't affect text without anchor tags", () => {
+  const input = "This is a test string without anchor tags.";
+  const expectedOutput = input;
+
+  const result = replaceAnchorLink(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceTags removes HTML tags", () => {
+  const input = "<p>This is a <strong>test</strong> with <em>HTML</em> tags.</p>";
+  const expectedOutput = "This is a test with HTML tags.";
+
+  const result = replaceTags(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceTags doesn't affect text without HTML tags", () => {
+  const input = "This is a test string without HTML tags.";
+  const expectedOutput = input;
+
+  const result = replaceTags(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceTags handles self-closing tags(1)", () => {
+  const input = "This is a test with a self-closing <br/> tag.";
+  const expectedOutput = "This is a test with a self-closing  tag.";
+
+  const result = replaceTags(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceTags handles self-closing tags(2)", () => {
+  const input = "This is a test with a self-closing <br /> tag.";
+  const expectedOutput = "This is a test with a self-closing  tag.";
+
+  const result = replaceTags(input);
+
+  assertEquals(result, expectedOutput);
+});
+
+Deno.test("replaceTags handles not-closing tags", () => {
+  const input = "This is a test with a self-closing <hr> tag.";
+  const expectedOutput = "This is a test with a self-closing  tag.";
+
+  const result = replaceTags(input);
+
+  assertEquals(result, expectedOutput);
 });
