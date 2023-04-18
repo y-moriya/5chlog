@@ -18,7 +18,7 @@ $ deno run -A src/main.ts thread_url title
 
 開始時刻と終了時刻を渡すとその時間内で切り取った書き込みのみを出力する。
 
-出力されるデータの vpos パラメータは開始時刻を起点として計算される。
+出力されるデータの vpos パラメータは開始時刻を起点として計算されます。
 
 ```bash
 $ deno run -A src/main.ts thread_url title 2023-03-23T10:01:29.980Z 2023-03-23T10:01:54.320Z
