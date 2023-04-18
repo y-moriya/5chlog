@@ -1,9 +1,13 @@
+import config from "../config.ts";
 import { assert, assertEquals } from "../deps.ts";
-import { Message } from "../src/types.ts";
+import { Chat, Message } from "../src/types.ts";
 import {
+  convertMessagesToXmlString,
+  convertMessageToXmlChatObj,
   createDirectoryIfNotExists,
   downloadThreadsRecursively,
   fileExists,
+  filterMessages,
   merge,
   parseThreadHTML,
   readJsonFilesInDir,
@@ -251,7 +255,7 @@ Deno.test("downloadThreadsRecursively function", async () => {
 });
 
 Deno.test("replaceSpan removes span tags", () => {
-  const input = "This is a <span class=\"test\">test</span> string.";
+  const input = 'This is a <span class="test">test</span> string.';
   const expectedOutput = "This is a test string.";
 
   const result = replaceSpan(input);
@@ -278,7 +282,7 @@ Deno.test("replaceSpan doesn't affect text without span tags", () => {
 });
 
 Deno.test("replaceAnchorLink removes anchor tags", () => {
-  const input = "This is a <a href=\"https://example.com\">test</a> link.";
+  const input = 'This is a <a href="https://example.com">test</a> link.';
   const expectedOutput = "This is a test link.";
 
   const result = replaceAnchorLink(input);
@@ -287,7 +291,8 @@ Deno.test("replaceAnchorLink removes anchor tags", () => {
 });
 
 Deno.test("replaceAnchorLink unescapes '&gt;' characters", () => {
-  const input = "This is a <a href=\"https://example.com\">&gt;&gt;test</a> link.";
+  const input =
+    'This is a <a href="https://example.com">&gt;&gt;test</a> link.';
   const expectedOutput = "This is a >>test link.";
 
   const result = replaceAnchorLink(input);
@@ -305,7 +310,8 @@ Deno.test("replaceAnchorLink doesn't affect text without anchor tags", () => {
 });
 
 Deno.test("replaceTags removes HTML tags", () => {
-  const input = "<p>This is a <strong>test</strong> with <em>HTML</em> tags.</p>";
+  const input =
+    "<p>This is a <strong>test</strong> with <em>HTML</em> tags.</p>";
   const expectedOutput = "This is a test with HTML tags.";
 
   const result = replaceTags(input);
@@ -347,4 +353,217 @@ Deno.test("replaceTags handles not-closing tags", () => {
   const result = replaceTags(input);
 
   assertEquals(result, expectedOutput);
+});
+
+Deno.test("convertMessageToXmlChatObj", () => {
+  const message: Message = {
+    date: "2021-04-16T12:00:00.000Z",
+    name: "test",
+    message: "test\ntest",
+    time: 100,
+    "data-userid": "test",
+    "data-id": "test",
+    dateStr: null,
+  };
+  const expected: Chat = {
+    "@thread": 0,
+    "@no": 1,
+    "@vpos": 100,
+    "@date": 1618574400000,
+    "@date_usec": 0,
+    "@anonimity": 1,
+    "@user_id": "test",
+    "@mail": 184,
+    "#text": "test test",
+  };
+  const result = convertMessageToXmlChatObj(message, 1);
+
+  assertEquals(result, expected);
+});
+
+Deno.test("convertMessagesToXmlString", () => {
+  const repeatCount = parseInt(config.maxLengthOfComment as string);
+  const messages: Message[] = [
+    {
+      date: "2021-04-16T12:00:00.000Z",
+      name: "test",
+      message: "test\ntest",
+      time: 100,
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-04-16T12:00:00.000Z",
+      name: "equal to maxLengthOfComment",
+      message: "a".repeat(repeatCount),
+      time: 100,
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-04-16T12:00:00.000Z",
+      name: "equal to maxLengthOfComment for japanese",
+      message: "あ".repeat(repeatCount),
+      time: 100,
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-04-16T12:00:00.000Z",
+      name: "too long message",
+      message: "a".repeat(repeatCount) + "b",
+      time: 100,
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-04-16T12:00:00.000Z",
+      name: "test",
+      message: "test\ntest",
+      time: 100,
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+  ];
+  const expected = `<?xml version="1.0" encoding="UTF-8"?>
+<packet>
+  <chat thread="0" no="1" vpos="100" date="1618574400000" date_usec="0" anonimity="1" user_id="test" mail="184">test test</chat>
+  <chat thread="0" no="2" vpos="100" date="1618574400000" date_usec="0" anonimity="1" user_id="test" mail="184">${
+    "a".repeat(repeatCount)
+  }</chat>
+  <chat thread="0" no="3" vpos="100" date="1618574400000" date_usec="0" anonimity="1" user_id="test" mail="184">${
+    "あ".repeat(repeatCount)
+  }</chat>
+  <chat thread="0" no="5" vpos="100" date="1618574400000" date_usec="0" anonimity="1" user_id="test" mail="184">test test</chat>
+</packet>`;
+  const result = convertMessagesToXmlString(messages);
+
+  assertEquals(result, expected);
+});
+
+Deno.test("filterMessages", () => {
+  const messages: Message[] = [
+    {
+      date: "2021-01-01T00:00:00.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:01.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:02.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:03.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:04.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+  ];
+  const from = new Date("2021-01-01T00:00:01.000Z");
+  const to = new Date("2021-01-01T00:00:03.000Z");
+  const filteredMes = filterMessages(messages, from, to);
+  assertEquals(filteredMes.length, 3);
+  assertEquals(filteredMes[0].date, "2021-01-01T00:00:01.000Z");
+  assertEquals(filteredMes[1].date, "2021-01-01T00:00:02.000Z");
+  assertEquals(filteredMes[2].date, "2021-01-01T00:00:03.000Z");
+  assertEquals(filteredMes[0].time, 0);
+  assertEquals(filteredMes[1].time, 100);
+  assertEquals(filteredMes[2].time, 200);
+});
+
+Deno.test("filterMessages 2", () => {
+  const messages: Message[] = [
+    {
+      date: "2021-01-01T00:00:00.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:01.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:02.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:03.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+    {
+      date: "2021-01-01T00:00:04.000Z",
+      message: "test",
+      time: 0,
+      name: "name",
+      "data-userid": "test",
+      "data-id": "test",
+      dateStr: null,
+    },
+  ];
+  const filteredMes = filterMessages(messages, null, null);
+  assertEquals(filteredMes.length, 5);
+  assertEquals(filteredMes[0].date, "2021-01-01T00:00:00.000Z");
+  assertEquals(filteredMes[1].date, "2021-01-01T00:00:01.000Z");
+  assertEquals(filteredMes[2].date, "2021-01-01T00:00:02.000Z");
+  assertEquals(filteredMes[3].date, "2021-01-01T00:00:03.000Z");
+  assertEquals(filteredMes[4].date, "2021-01-01T00:00:04.000Z");
+  assertEquals(filteredMes[0].time, 0);
+  assertEquals(filteredMes[1].time, 100);
+  assertEquals(filteredMes[2].time, 200);
+  assertEquals(filteredMes[3].time, 300);
+  assertEquals(filteredMes[4].time, 400);
 });

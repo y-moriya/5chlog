@@ -1,6 +1,7 @@
-import { datetime, DOMParser, Element, join } from "../deps.ts";
+import config from "../config.ts";
+import { datetime, DOMParser, Element, join, stringify } from "../deps.ts";
 import { downloadThread } from "./downloadThread.ts";
-import { Message, Thread } from "./types.ts";
+import { Chat, Message, Thread } from "./types.ts";
 
 /**
  * 指定したミリ秒処理をスリープする
@@ -128,7 +129,18 @@ export async function merge(dir: string) {
   for (const thread of jsonFilesData) {
     allMes.push(...thread.messages!);
   }
-  const sortedMessages = allMes.sort((a, b) => {
+  await Deno.writeTextFile(
+    `merged/${dir}.json`,
+    JSON.stringify(sortAndSanitizeMessages(allMes)),
+  );
+}
+
+/**
+ * @param messages メッセージオブジェクトの配列
+ * @returns 日付でソートしてタグを削除したメッセージオブジェクトの配列
+ */
+export function sortAndSanitizeMessages(messages: Message[]): Message[] {
+  const sortedMessages = messages.sort((a, b) => {
     return new Date(a.date!).getTime() - new Date(b.date!).getTime()!;
   });
 
@@ -138,32 +150,65 @@ export async function merge(dir: string) {
   sortedMessages.forEach((message) => {
     // 経過秒数を計算し、timeプロパティに格納
     message.time = new Date(message.date!).getTime() - referenceDate.getTime();
-    // message.message = replaceAnchorLink(message.message);
-    // message.message = replaceSpan(message.message);
     // タグを削除
     message.message = replaceTags(message.message);
   });
 
+  return sortedMessages;
+}
+
+/**
+ * メッセージオブジェクトの配列から XML ファイルを出力する
+ * @param dir 対象のディレクトリ
+ */
+export async function xml(dir: string) {
+  const json = await Deno.readTextFile(`filtered/${dir}.json`);
+  const messages: Message[] = JSON.parse(json);
+  const xmlString = convertMessagesToXmlString(messages);
+
   await Deno.writeTextFile(
-    `merged/${dir}.json`,
-    JSON.stringify(sortedMessages),
+    `xml/${dir}.xml`,
+    xmlString,
   );
 }
 
-export async function filter(title: string, from: Date, to: Date) {
+/**
+ * 指定した期間のメッセージを抽出する
+ * @param title ファイル名
+ * @param from 開始日時
+ * @param to 終了日時
+ */
+export async function filter(
+  title: string,
+  from: Date | null,
+  to: Date | null,
+) {
   const json = await Deno.readTextFile(`merged/${title}.json`);
   const allMes: Message[] = JSON.parse(json);
-  const filteredMes = allMes.filter((mes) => {
-    return from <= new Date(mes.date!) && new Date(mes.date!) <= to;
-  });
-  filteredMes.forEach((mes) => {
-    mes.time = (new Date(mes.date!).getTime() - from.getTime()) / 10;
-  });
+  const filteredMes = filterMessages(allMes, from, to);
 
   await Deno.writeTextFile(
     `filtered/${title}.json`,
     JSON.stringify(filteredMes),
   );
+}
+
+export function filterMessages(
+  messages: Message[],
+  from: Date | null,
+  to: Date | null,
+): Message[] {
+  const start = !from ? new Date(messages[0].date!) : from;
+  const end = !to ? new Date(messages[messages.length - 1].date!) : to;
+
+  const filterMessages = messages.filter((mes) => {
+    return start <= new Date(mes.date!) && new Date(mes.date!) <= end;
+  });
+  filterMessages.forEach((mes) => {
+    mes.time = (new Date(mes.date!).getTime() - start.getTime()) / 10;
+  });
+
+  return filterMessages;
 }
 
 export function replaceAnchorLink(text: string): string {
@@ -214,3 +259,48 @@ export const THREAD_URL_REGEX =
   /(https:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
 
 export const DATE_STRING_FORMAT = "YYYY/MM/dd(www) HH:mm:ss.S";
+
+export function convertMessageToXmlChatObj(
+  message: Message,
+  index: number,
+): Chat {
+  return {
+    "@thread": 0, // 0固定
+    "@no": index, // 渡されたindexを入れる
+    "@vpos": message.time!, // time を入れる
+    "@date": new Date(message.date!).getTime(), // date.getTime()
+    "@date_usec": 0, // 0固定
+    "@anonimity": 1, // 1固定
+    "@user_id": message["data-userid"], // 適当に生成する
+    "@mail": 184, // 184固定
+    "#text": message.message.replaceAll("\n", " "), // message
+  };
+}
+
+/**
+ * メッセージ一覧を xml に変換する
+ * @param messages メッセージ一覧
+ * @returns xml 文字列
+ */
+export function convertMessagesToXmlString(messages: Message[]): string {
+  const chats: Chat[] = [];
+  for (let i = 0; i < messages.length; i++) {
+    // 長すぎるコメントはスキップ
+    if (
+      messages[i].message.length > parseInt(config.maxLengthOfComment as string)
+    ) {
+      continue;
+    }
+    chats.push(convertMessageToXmlChatObj(messages[i], i + 1));
+  }
+
+  return stringify({
+    xml: {
+      "@version": "1.0",
+      "@encoding": "UTF-8",
+    },
+    packet: {
+      chat: chats,
+    },
+  });
+}

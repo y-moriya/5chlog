@@ -13,3 +13,15 @@ export interface Message {
   time?: number;
   message: string;
 }
+
+export interface Chat {
+  "@thread": number;
+  "@no": number;
+  "@vpos": number;
+  "@date": number;
+  "@date_usec": number;
+  "@anonimity": number;
+  "@user_id": string;
+  "@mail": number;
+  "#text": string;
+}

@@ -21,16 +21,16 @@ export async function downloadThread(
   if (match) {
     path = `${dist}/${match[1]}.json`;
   } else {
-    console.log("No thread id found");
+    console.error("No thread id found");
     Deno.exit(1);
   }
 
   if (await fileExists(path)) {
-    console.log("skip because File exists");
+    console.info("skip because File exists");
     return [];
   }
 
-  console.log(`start download ${url}`);
+  console.info(`start download ${url}`);
   const response = await fetch(url);
   const arrayBuffer = await response.arrayBuffer();
   const html = new TextDecoder("shift-jis").decode(arrayBuffer);
@@ -40,7 +40,7 @@ export async function downloadThread(
     messages: parseThreadHTML(html),
   };
   Deno.writeTextFileSync(path, JSON.stringify(thread));
-  console.log("end download");
+  console.info("end download");
   await sleep(3000);
 
   return thread.messages[0]?.message.match(THREAD_URL_REGEX) || [];
