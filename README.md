@@ -24,7 +24,7 @@ $ deno run -A src/main.ts thread_url title
 $ deno run -A src/main.ts thread_url title 2023-03-23T10:01:29.980Z 2023-03-23T10:01:54.320Z
 ```
 
-`threads`, `merged`, `filtered` ディレクトリにはそれぞれの中間データが保存される。（今後削除予定）
+`threads` にはスレごとの json ファイルが保存され、ファイルが存在する場合は新規にダウンロードされません。 `merged`, `filtered` ディレクトリにはそれぞれの中間データが保存される。（今後削除されるかも）
 
 ## Test
 
