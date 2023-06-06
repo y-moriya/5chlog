@@ -22,5 +22,8 @@ jobs:
       - name: Install dependencies
         run: deno cache --reload --unstable deps.ts
 
+      - name: Copy config.json
+        run: cp config.sample.json config.json
+
       - name: Run tests
         run: deno test -A
