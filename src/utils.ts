@@ -1,7 +1,7 @@
 import config from "../config.ts";
 import { datetime, DOMParser, Element, join, stringify } from "../deps.ts";
 import { downloadThread } from "./downloadThread.ts";
-import { Chat, Message, Thread } from "./types.ts";
+import { Chat, Message, Thread, VideoData } from "./types.ts";
 
 /**
  * 指定したミリ秒処理をスリープする
@@ -206,6 +206,9 @@ export function filterMessages(
   });
   filterMessages.forEach((mes) => {
     mes.time = (new Date(mes.date!).getTime() - start.getTime()) / 10;
+    mes.message = replaceTags(mes.message);
+    mes.message = replaceSpan(mes.message);
+    mes.message = replaceAnchorLink(mes.message);
   });
 
   return filterMessages;
@@ -273,8 +276,18 @@ export function convertMessageToXmlChatObj(
     "@anonimity": 1, // 1固定
     "@user_id": message["data-userid"], // 適当に生成する
     "@mail": 184, // 184固定
-    "#text": message.message.replaceAll("\n", " "), // message
+    "#text": replaceNewLineWithSpace(replaceAllSpacesWithOneSpace(message.message)), // message
   };
+}
+
+// function to replace all spaces with 1 space
+export function replaceAllSpacesWithOneSpace(text: string): string {
+  return text.replace(/\s+/g, " ");
+}
+
+// function to replace \n with space
+export function replaceNewLineWithSpace(text: string): string {
+  return text.replace(/\n/g, " ");
 }
 
 /**
@@ -303,4 +316,73 @@ export function convertMessagesToXmlString(messages: Message[]): string {
       chat: chats,
     },
   });
+}
+
+/**
+ * Youtube Data API を使用して、動画の情報を取得する
+ * @param videoId 動画ID
+ * @returns 動画データオブジェクト
+ */
+export async function getVideoData(videoId: string): Promise<VideoData> {
+  const apiKey = config.youtubeApiKey;
+  const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=snippet,liveStreamingDetails`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    console.error(response);
+    throw new Error("Network response was not ok");
+  }
+  const data = await response.json();
+  return {
+    title: data.items[0].snippet.title,
+    id: videoId,
+    actualStartTime: data.items[0].liveStreamingDetails.actualStartTime,
+    actualEndTime: data.items[0].liveStreamingDetails.actualEndTime,
+  };
+}
+
+/**
+ * yt-dlp を利用して、動画をダウンロードする
+ * @param videoId 動画ID
+ */
+export async function downloadVideo(videoId: string): Promise<number> {
+  if (!Deno.statSync('dist')) {
+    Deno.mkdirSync('dist');
+  }
+
+  const p = new Deno.Command("yt-dlp", {
+    args: [videoId, "-o", `dist/${videoId}_%(title)s.%(ext)s`],
+    stdin: "piped",
+    stdout: "piped",
+  }).spawn();
+
+  const { code, stdout } = await p.output();
+
+  console.info(new TextDecoder().decode(stdout));
+
+  return code;
+}
+
+/**
+ * 指定した動画IDのファイル名を取得する
+ * @param videoId
+ * @returns ファイル名
+ */
+export function getVideoFileNameWithoutExt(videoId: string): string {
+  // find file name
+  const files = Deno.readDirSync("dist");
+  const fileName = [...files].find((file) => file.name.includes(videoId));
+  if (!fileName) {
+    throw new Error("file not found");
+  }
+  return fileName.name.replace(/\.[^/.]+$/, "");
+}
+
+/**
+ * 指定した秒数を加算した日付を返す
+ * @param date
+ * @param sec
+ * @returns Dateオブジェクト
+ */
+export function addSecToDate(date: Date, sec: number): Date {
+  return new Date(date.getTime() + sec * 1000);
 }

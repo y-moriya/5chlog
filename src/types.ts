@@ -25,3 +25,10 @@ export interface Chat {
   "@mail": number;
   "#text": string;
 }
+
+export interface VideoData {
+  title: string;
+  id: string;
+  actualStartTime: string;
+  actualEndTime: string;
+}

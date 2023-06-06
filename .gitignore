@@ -4,3 +4,5 @@ threads
 test_output
 filtered
 xml
+dist
+config.json
