@@ -51,10 +51,11 @@ export function parseThreadHTML(html: string): Message[] {
       messages.push(mes);
     } catch (error) {
       if (error instanceof RangeError) {
-        console.warn(
-          "Message skipped caused by RangeError occurred:",
-          error.message,
-        );
+        // 基本的に 1001, 1002 などのレスなのでログ出力は不要
+        // console.debug(
+        //   "Message skipped caused by RangeError occurred:",
+        //   error.message,
+        // );
       } else {
         throw error;
       }
@@ -276,7 +277,9 @@ export function convertMessageToXmlChatObj(
     "@anonimity": 1, // 1固定
     "@user_id": message["data-userid"], // 適当に生成する
     "@mail": 184, // 184固定
-    "#text": replaceNewLineWithSpace(replaceAllSpacesWithOneSpace(message.message)), // message
+    "#text": replaceNewLineWithSpace(
+      replaceAllSpacesWithOneSpace(message.message),
+    ), // message
   };
 }
 
@@ -325,7 +328,8 @@ export function convertMessagesToXmlString(messages: Message[]): string {
  */
 export async function getVideoData(videoId: string): Promise<VideoData> {
   const apiKey = config.youtubeApiKey;
-  const url = `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=snippet,liveStreamingDetails`;
+  const url =
+    `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=snippet,liveStreamingDetails`;
   const response = await fetch(url);
   if (!response.ok) {
     console.error(response);
@@ -344,13 +348,12 @@ export async function getVideoData(videoId: string): Promise<VideoData> {
  * yt-dlp を利用して、動画をダウンロードする
  * @param videoId 動画ID
  */
-export async function downloadVideo(videoId: string): Promise<number> {
-  if (!Deno.statSync('dist')) {
-    Deno.mkdirSync('dist');
-  }
-
+export async function downloadVideo(
+  videoId: string,
+  dir: string,
+): Promise<number> {
   const p = new Deno.Command("yt-dlp", {
-    args: [videoId, "-o", `dist/${videoId}_%(title)s.%(ext)s`],
+    args: [videoId, "-o", `${dir}/${videoId}_%(title)s.%(ext)s`],
     stdin: "piped",
     stdout: "piped",
   }).spawn();
@@ -367,22 +370,15 @@ export async function downloadVideo(videoId: string): Promise<number> {
  * @param videoId
  * @returns ファイル名
  */
-export function getVideoFileNameWithoutExt(videoId: string): string {
+export function getVideoFileNameWithoutExt(
+  videoId: string,
+  dir: string,
+): string {
   // find file name
-  const files = Deno.readDirSync("dist");
+  const files = Deno.readDirSync(dir);
   const fileName = [...files].find((file) => file.name.includes(videoId));
   if (!fileName) {
     throw new Error("file not found");
   }
   return fileName.name.replace(/\.[^/.]+$/, "");
-}
-
-/**
- * 指定した秒数を加算した日付を返す
- * @param date
- * @param sec
- * @returns Dateオブジェクト
- */
-export function addSecToDate(date: Date, sec: number): Date {
-  return new Date(date.getTime() + sec * 1000);
 }

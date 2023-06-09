@@ -45,7 +45,9 @@ $ deno run -A src/5chlog.ts thread_url title 2023-03-23T10:01:29.980Z 2023-03-23
 $ deno run -A src/main.ts -v video_id -t url
 ```
 
-`dist` フォルダに動画ファイルとxmlファイルが出力されます。
+デフォルトでは `dist` フォルダに動画ファイルとxmlファイルが出力されます。 `-o` で出力先ディレクトリを指定できるほか、 `config.json` の `distDir` の設定を変更することでデフォルトの出力先を変更できます。
+
+`list` フォルダに `[video_id].txt` を配置すると `-t` を指定しなかった場合にそのファイルからスレッドURLを取得します。改行区切りでスレッドURLを記載しておいてください。
 
 ## Test
 

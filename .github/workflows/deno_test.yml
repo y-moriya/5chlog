@@ -23,7 +23,7 @@ jobs:
         run: deno cache --reload --unstable deps.ts
 
       - name: Copy config.json
-        run: cp config.sample.json config.json
+        run: cp config.json.example config.json
 
       - name: Run tests
         run: deno test -A

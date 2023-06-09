@@ -6,3 +6,9 @@ filtered
 xml
 dist
 config.json
+cov_profile
+mymemo.md
+kakolog.db
+list
+kakolog.db-journal
+.vscode

@@ -20,7 +20,7 @@ async function main() {
     Deno.exit(1);
   }
   // url ex. https://eagle.5ch.net/test/read.cgi/livejupiter/1679140495/
-  if ((url != 'cache') && !url.match(THREAD_URL_REGEX)) {
+  if ((url != "cache") && !url.match(THREAD_URL_REGEX)) {
     console.error("スレッドURLの形式が不正です。");
     Deno.exit(1);
   }
@@ -29,7 +29,7 @@ async function main() {
     Deno.exit(1);
   }
 
-  if (url != 'cache') {
+  if (url != "cache") {
     const dist = `threads/${name}`;
     await createDirectoryIfNotExists(dist);
 
