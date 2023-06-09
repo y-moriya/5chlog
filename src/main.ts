@@ -69,7 +69,6 @@ async function main() {
     }
   }
 
-  console.info("動画をダウンロードします。時間がかかる場合があります...");
   const videoData = await getVideoData(id);
 
   if (!videoData) {
@@ -77,14 +76,32 @@ async function main() {
     Deno.exit(1);
   }
 
-  const code = await downloadVideo(id, output);
+  // check installed yt-dlp
+  const p = new Deno.Command("yt-dlp", {
+    args: ["--version"],
+    stdin: "null",
+    stdout: "null",
+  }).spawn();
 
-  if (code != 0) {
-    console.error("動画のダウンロードに失敗しました。");
-    Deno.exit(1);
+  const { success } = await p.output();
+
+  let fileName = id;
+
+  if (!success) {
+    console.error("yt-dlpがインストールされていません。");
+    console.info("動画ダウンロードをスキップします。");
+  } else {
+    console.info("動画をダウンロードします。時間がかかる場合があります...");
+    const code = await downloadVideo(id, output);
+
+    if (code != 0) {
+      console.error("動画のダウンロードに失敗しました。");
+      Deno.exit(1);
+    }
+
+    fileName = getVideoFileNameWithoutExt(id, output);
   }
 
-  const fileName = getVideoFileNameWithoutExt(id, output);
 
   if (threads.length > 0) {
     await createDirectoryIfNotExists(`threads/${id}`);
@@ -118,6 +135,9 @@ async function main() {
 
   // log complete
   console.log("完了しました。");
+
+  // log output path
+  console.log(`出力先: ${output}/${fileName}.xml`);
 }
 
 await main();
