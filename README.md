@@ -8,7 +8,7 @@
 
 ## Install
 
-Releases ページから自分の環境に合った zip ファイルをダウンロードし、任意のフォルダに解凍してください。
+Releases ページから自分の環境に合った zip ファイルをダウンロードし、任意のフォルダに解凍してください。`config.json` の `youtubeApiKey` に自分で取得した YouTube Data API の API Key を設定する必要があります。
 
 ## Usage
 
@@ -16,7 +16,7 @@ Releases ページから自分の環境に合った zip ファイルをダウン
 - API Key は Google Cloud Console から YouTube Data API v3 を有効化して API Key を作成してください。
 - 動画のダウンロードには yt-dlp を別途インストールして Path を通してください。
 
-`5chlog.exe` に YouTube 動画の ID とスレッドURLを渡して実行してください。
+`5chlog.exe` に YouTube 動画の ID とスレッドURLを渡して実行してください。スレッドは>>1に記載されている前スレッドのURLを辿りながら再帰的にスレッドを取得します。一連の実況スレッドの最後のURLを渡すとよいでしょう。
 
 ```windows
 $ 5chlog.exe -v video_id -t url
