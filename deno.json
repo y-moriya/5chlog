@@ -1,0 +1,5 @@
+{
+  "tasks": {
+    "compile-win": "deno compile --unstable --allow-read --allow-net --allow-run --allow-write src/main.ts --output build/5chlog.exe --target x86_64-pc-windows-msvc"
+  }
+}

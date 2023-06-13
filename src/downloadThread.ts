@@ -15,7 +15,7 @@ export async function downloadThread(
   url: string,
   dist: string,
 ): Promise<string[]> {
-  const regex = /(\d+)\/?$/;
+  const regex = /\/(\d+)/;
   const match = url.match(regex);
   let path;
   if (match) {

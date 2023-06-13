@@ -1,14 +1,17 @@
+# directories
 data
-merged
 threads
 test_output
-filtered
-xml
 dist
-config.json
 cov_profile
+list
+build
+.vscode
+
+# config files
+config.json
+
+# misc
 mymemo.md
 kakolog.db
-list
 kakolog.db-journal
-.vscode

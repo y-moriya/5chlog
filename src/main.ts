@@ -130,7 +130,7 @@ async function main() {
   await xml(id);
 
   // dist ディレクトリに移動
-  Deno.copyFileSync(`xml/${id}.xml`, `${output}/${id}.xml`);
+  Deno.copyFileSync(`threads/${id}/${id}.xml`, `${output}/${id}.xml`);
   Deno.renameSync(`${output}/${id}.xml`, `${output}/${fileName}.xml`);
 
   // log complete

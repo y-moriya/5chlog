@@ -109,6 +109,8 @@ export async function readJsonFilesInDir(dirPath: string): Promise<Thread[]> {
 
   for await (const entry of Deno.readDir(dirPath)) {
     if (entry.isFile && entry.name.endsWith(".json")) {
+      // continue if file name is merged.json or filtered.json
+      if (entry.name === "merged.json" || entry.name === "filtered.json") continue;
       const filePath = join(dirPath, entry.name);
       const jsonContent = await Deno.readTextFile(filePath);
       const jsonData = JSON.parse(jsonContent);
@@ -121,17 +123,17 @@ export async function readJsonFilesInDir(dirPath: string): Promise<Thread[]> {
 
 /**
  * 指定したディレクトリの json ファイルに含まれる message をマージして一つの json に出力する
- * @param dir 対象のディレクトリ
+ * @param videoId 対象のディレクトリ
  */
-export async function merge(dir: string) {
-  const dirPath = `threads/${dir}`;
+export async function merge(videoId: string) {
+  const dirPath = `threads/${videoId}`;
   const jsonFilesData = await readJsonFilesInDir(dirPath);
   const allMes: Message[] = [];
   for (const thread of jsonFilesData) {
     allMes.push(...thread.messages!);
   }
   await Deno.writeTextFile(
-    `merged/${dir}.json`,
+    `threads/${videoId}/merged.json`,
     JSON.stringify(sortAndSanitizeMessages(allMes)),
   );
 }
@@ -163,33 +165,33 @@ export function sortAndSanitizeMessages(messages: Message[]): Message[] {
  * @param dir 対象のディレクトリ
  */
 export async function xml(dir: string) {
-  const json = await Deno.readTextFile(`filtered/${dir}.json`);
+  const json = await Deno.readTextFile(`threads/${dir}/filtered.json`);
   const messages: Message[] = JSON.parse(json);
   const xmlString = convertMessagesToXmlString(messages);
 
   await Deno.writeTextFile(
-    `xml/${dir}.xml`,
+    `threads/${dir}/${dir}.xml`,
     xmlString,
   );
 }
 
 /**
  * 指定した期間のメッセージを抽出する
- * @param title ファイル名
+ * @param videoId ファイル名
  * @param from 開始日時
  * @param to 終了日時
  */
 export async function filter(
-  title: string,
+  videoId: string,
   from: Date | null,
   to: Date | null,
 ) {
-  const json = await Deno.readTextFile(`merged/${title}.json`);
+  const json = await Deno.readTextFile(`threads/${videoId}/merged.json`);
   const allMes: Message[] = JSON.parse(json);
   const filteredMes = filterMessages(allMes, from, to);
 
   await Deno.writeTextFile(
-    `filtered/${title}.json`,
+    `threads/${videoId}/filtered.json`,
     JSON.stringify(filteredMes),
   );
 }
