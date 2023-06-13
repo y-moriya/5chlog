@@ -35,7 +35,7 @@ jobs:
             ./bin/5chlog
             ./bin/5chlog_macos
             ./bin/5chlog.exe
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.event.pull_request.head.ref }}
           body: |
             ${{ github.event.head_commit.message }}
           draft: false
