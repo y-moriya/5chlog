@@ -49,7 +49,7 @@ jobs:
             ./bin/5chlog_linux.zip
             ./bin/5chlog_macos.zip
             ./bin/5chlog_windows.zip
-          tag_name: ${{ replace(github.head_ref, 'release/', '') }}
+          tag_name: ${{ github.head_ref }}
           generate_release_notes: true
           draft: false
           prerelease: false
