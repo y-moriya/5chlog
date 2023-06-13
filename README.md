@@ -8,7 +8,7 @@
 
 ## Install
 
-作成中
+Release ページからダウンロードしてください。
 
 ## Usage
 
