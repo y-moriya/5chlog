@@ -9,7 +9,7 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.title, 'Release')
+    if: github.event.pull_request.merged == true
     permissions:
       contents: write
     steps:
@@ -49,7 +49,7 @@ jobs:
             ./bin/5chlog_linux.zip
             ./bin/5chlog_macos.zip
             ./bin/5chlog_windows.zip
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ replace(github.head_ref, 'release/', '') }}
           generate_release_notes: true
           draft: false
           prerelease: false
