@@ -8,10 +8,10 @@ import {
   merge,
   THREAD_URL_REGEX,
   xml,
+  downloadThread,
 } from "./utils.ts";
 import { parse } from "../deps.ts";
 import { readAll } from "https://deno.land/std@0.191.0/streams/read_all.ts";
-import { downloadThread } from "./downloadThread.ts";
 import config from "../config.ts";
 
 async function main() {

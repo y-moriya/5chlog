@@ -1,3 +1,4 @@
+import config from "../config.ts";
 import { DOMParser, Element } from "../deps.ts";
 import { DB } from "https://deno.land/x/sqlite/mod.ts";
 
@@ -70,7 +71,7 @@ function bulkInsertThread(db: DB, threads: Thread[]): number {
   return insertedRows;
 }
 
-const db = initSqlite3("kakolog.db");
+const db = initSqlite3(config.kakologDbFile as string);
 
 for (let i = 0; i < 10000; i++) {
   console.log(`download ${i}`);
