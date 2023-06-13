@@ -43,4 +43,4 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.five-ch-log }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
