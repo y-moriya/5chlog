@@ -157,9 +157,8 @@ Deno.test("readJsonFilesInDir function", async () => {
 
 Deno.test("merge function", async () => {
   const testDir = "threads/testThreads";
-  const testOutputDir = "merged";
-  await Deno.mkdir("merged", { recursive: true });
-  const testOutputFile = `${testOutputDir}/testThreads.json`;
+  const testOutputDir = "threads";
+  const testOutputFile = `${testOutputDir}/testThreads/merged.json`;
 
   // 1. Create test directory and data
   await Deno.mkdir(testDir, { recursive: true });
@@ -220,7 +219,6 @@ Deno.test("merge function", async () => {
 
   // 4. Clean up test data
   await Deno.remove(testDir, { recursive: true });
-  await Deno.remove(testOutputFile);
 });
 
 Deno.test("downloadThreadsRecursively function", async () => {
