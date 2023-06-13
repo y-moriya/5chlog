@@ -72,7 +72,7 @@ async function main() {
   const videoData = await getVideoData(id);
 
   if (!videoData) {
-    console.error("動画IDが不正です。");
+    console.error("動画情報を取得できませんでした。");
     Deno.exit(1);
   }
 

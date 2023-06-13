@@ -327,12 +327,16 @@ export function convertMessagesToXmlString(messages: Message[]): string {
  * @param videoId 動画ID
  * @returns 動画データオブジェクト
  */
-export async function getVideoData(videoId: string): Promise<VideoData> {
+export async function getVideoData(videoId: string): Promise<VideoData | null> {
   const apiKey = config.youtubeApiKey;
   const url =
     `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&key=${apiKey}&part=snippet,liveStreamingDetails`;
   const response = await fetch(url);
   if (!response.ok) {
+    if (response.status === 403) {
+      console.error("YouTube Data API のキーが無効です");
+      return null;
+    }
     console.error(response);
     throw new Error("Network response was not ok");
   }
