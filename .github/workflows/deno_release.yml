@@ -9,7 +9,7 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    if: github.event.pull_request.merged == true
+    if: contains(github.event.pull_request.title, 'Release')
     permissions:
       contents: write
     steps:
@@ -44,7 +44,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          name: ${{ github.event.pull_request.body }}
+          name: ${{ github.head_ref }}
           body: ${{ github.event.pull_request.body }}
           files: |
             ./bin/5chlog_linux.zip
