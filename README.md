@@ -16,9 +16,9 @@
 - API Key は Google Cloud Console から YouTube Data API v3 を有効化して API Key を作成してください。
 - 動画のダウンロードには yt-dlp を別途インストールして Path を通してください。
 
-`src/main.ts` に YouTube 動画の ID とスレッドURLを渡して実行してください。
+`5chlog.exe` に YouTube 動画の ID とスレッドURLを渡して実行してください。
 
-```shell
+```windows
 $ 5chlog.exe -v video_id -t url
 ```
 
