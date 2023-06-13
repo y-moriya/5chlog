@@ -21,23 +21,34 @@ jobs:
         with:
           deno-version: v1.x
 
+      - name: Copy config.json
+        run: cp config.json.example config.json
+
       - name: Compile for release (Linux)
         run: deno compile --unstable --allow-read --allow-write --allow-env --allow-net --allow-run --target x86_64-unknown-linux-gnu --output ./bin/5chlog ./src/main.ts
+      - name: Zip for release (Linux)
+        run: zip -j ./bin/5chlog_linux.zip ./bin/5chlog config.json
 
       - name: Compile for release (macOS)
         run: deno compile --unstable --allow-read --allow-write --allow-env --allow-net --allow-run --target x86_64-apple-darwin --output ./bin/5chlog_macos ./src/main.ts
 
+      - name: Zip for release (macOS)
+        run: zip -j ./bin/5chlog_macos.zip ./bin/5chlog_macos config.json
+
       - name: Compile for release (Windows)
         run: deno compile --unstable --allow-read --allow-write --allow-env --allow-net --allow-run --target x86_64-pc-windows-msvc --output ./bin/5chlog.exe ./src/main.ts
+
+      - name: Zip for release (Windows)
+        run: zip -j ./bin/5chlog_windows.zip ./bin/5chlog.exe config.json
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ github.event.pull_request.body }}
           files: |
-            ./bin/5chlog
-            ./bin/5chlog_macos
-            ./bin/5chlog.exe
+            ./bin/5chlog_linux.zip
+            ./bin/5chlog_macos.zip
+            ./bin/5chlog_windows.zip
           tag_name: ${{ github.ref }}
           generate_release_notes: true
           draft: false
