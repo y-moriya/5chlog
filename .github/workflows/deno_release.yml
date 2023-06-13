@@ -10,6 +10,8 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.title, 'Release')
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
