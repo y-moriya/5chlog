@@ -45,12 +45,12 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ github.event.pull_request.body }}
+          body: ${{ github.event.pull_request.body }}
           files: |
             ./bin/5chlog_linux.zip
             ./bin/5chlog_macos.zip
             ./bin/5chlog_windows.zip
           tag_name: ${{ github.head_ref }}
-          generate_release_notes: true
           draft: false
           prerelease: false
         env:
