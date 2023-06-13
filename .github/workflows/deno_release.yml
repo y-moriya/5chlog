@@ -31,13 +31,15 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
+          name: ${{ github.event.pull_request.body }}
           files: |
             ./bin/5chlog
             ./bin/5chlog_macos
             ./bin/5chlog.exe
-          tag_name: ${{ github.event.pull_request.head.ref }}
+          tag_name: ${{ github.event.pull_request.title }}
           body: |
             ${{ github.event.head_commit.message }}
+          generate_release_notes: true
           draft: false
           prerelease: false
         env:
