@@ -1,0 +1,44 @@
+name: Deno Release
+
+on:
+  pull_request:
+    types:
+      - closed
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.title, 'Release')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Deno
+        uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.x
+
+      - name: Compile for release (Linux)
+        run: deno compile --unstable --allow-read --allow-write --allow-env --allow-net --allow-run --target x86_64-unknown-linux-gnu --output ./bin/5chlog ./src/main.ts
+
+      - name: Compile for release (macOS)
+        run: deno compile --unstable --allow-read --allow-write --allow-env --allow-net --allow-run --target x86_64-apple-darwin --output ./bin/5chlog_macos ./src/main.ts
+
+      - name: Compile for release (Windows)
+        run: deno compile --unstable --allow-read --allow-write --allow-env --allow-net --allow-run --target x86_64-pc-windows-msvc --output ./bin/5chlog.exe ./src/main.ts
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            ./bin/5chlog
+            ./bin/5chlog_macos
+            ./bin/5chlog.exe
+          tag_name: ${{ github.ref }}
+          body: |
+            ${{ github.event.head_commit.message }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
