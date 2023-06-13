@@ -12,6 +12,5 @@ build
 config.json
 
 # misc
-mymemo.md
 kakolog.db
 kakolog.db-journal
