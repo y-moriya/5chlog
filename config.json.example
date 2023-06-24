@@ -1,6 +1,5 @@
 {
   "maxLengthOfComment": 100,
   "youtubeApiKey": "YOUR_API_KEY",
-  "distDir": "dist",
-  "kakologDbFile": "kakolog.db"
+  "distDir": "dist"
 }
