@@ -9,7 +9,7 @@ import {
   fileExists,
   filterMessages,
   merge,
-  parseThreadHTML,
+  parseThread,
   readJsonFilesInDir,
   replaceAnchorLink,
   replaceSpan,
@@ -68,7 +68,7 @@ Deno.test("parseThreadHTML function", () => {
     },
   ];
 
-  const result = parseThreadHTML(html);
+  const result = parseThread(html);
   assertEquals(result, expectedResult);
 });
 

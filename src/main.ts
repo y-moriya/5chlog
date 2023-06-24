@@ -1,5 +1,6 @@
 import {
   createDirectoryIfNotExists,
+  downloadThread,
   downloadThreadsRecursively,
   downloadVideo,
   filter,
@@ -8,7 +9,6 @@ import {
   merge,
   THREAD_URL_REGEX,
   xml,
-  downloadThread,
 } from "./utils.ts";
 import { parse } from "../deps.ts";
 import { readAll } from "https://deno.land/std@0.191.0/streams/read_all.ts";
@@ -101,7 +101,6 @@ async function main() {
 
     fileName = getVideoFileNameWithoutExt(id, output);
   }
-
 
   if (threads.length > 0) {
     await createDirectoryIfNotExists(`threads/${id}`);

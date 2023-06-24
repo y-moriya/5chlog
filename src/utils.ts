@@ -1,3 +1,4 @@
+import { NodeList } from "https://deno.land/x/deno_dom@v0.1.37/deno-dom-wasm.ts";
 import config from "../config.ts";
 import { datetime, DOMParser, Element, join, stringify } from "../deps.ts";
 import { Chat, Message, Thread, VideoData } from "./types.ts";
@@ -16,9 +17,68 @@ export function sleep(ms: number): Promise<void> {
  * @param html 5chのスレッドHTML
  * @returns メッセージオブジェクトの配列
  */
-export function parseThreadHTML(html: string): Message[] {
+export function parseThread(html: string): Message[] {
   const doc = new DOMParser().parseFromString(html, "text/html")!;
+  const articles = doc.querySelectorAll("article");
+  if (articles.length) {
+    return parseThreadHTMLNew(articles);
+  }
   const posts = doc.querySelectorAll(".post");
+  if (posts.length) {
+    return parseThreadHTMLOld(posts);
+  }
+  throw new Error("スレッドのパースに失敗しました。");
+}
+
+/**
+ * 5chのスレッドHTMLからarticleタグを抽出したものに対し、各書き込みをパースしてMessageの配列にして返却する
+ * @param articles articleタグの配列
+ * @returns メッセージオブジェクトの配列
+ */
+export function parseThreadHTMLNew(articles: NodeList): Message[] {
+  const messages: Message[] = [];
+  for (const article of articles) {
+    try {
+      const a = article as Element;
+      const name = a.querySelector(".postusername")!;
+      const date = a.querySelector(".date")!;
+      const message = a.querySelector(".post-content")!;
+      const messageText = message.innerHTML.replace(/<br>/g, "\n").trim();
+      const dateStr = date.textContent?.trim() + "0"; // ptera はミリ秒を3桁で認識するので 0 で埋める
+      const dateObj = datetime().parse(dateStr, DATE_STRING_FORMAT, {
+        locale: "ja",
+      }).toJSDate();
+      const mes: Message = {
+        "data-userid": a.getAttribute("data-userid")!,
+        "data-id": a.getAttribute("data-id")!,
+        "name": name.textContent?.trim(),
+        "dateStr": dateStr,
+        "date": dateObj,
+        "time": 0,
+        "message": messageText,
+      };
+      messages.push(mes);
+    } catch (error) {
+      if (error instanceof RangeError) {
+        // 基本的に 1001, 1002 などのレスなのでログ出力は不要
+        // console.debug(
+        //   "Message skipped caused by RangeError occurred:",
+        //   error.message,
+        // );
+      } else {
+        throw error;
+      }
+    }
+  }
+  return messages;
+}
+
+/**
+ * 5chのスレッドHTMLからpostクラスを抽出したものに対し、各書き込みをパースしてMessageの配列にして返却する
+ * @param posts postクラスの配列
+ * @returns メッセージオブジェクトの配列
+ */
+export function parseThreadHTMLOld(posts: NodeList): Message[] {
   const messages: Message[] = [];
 
   for (const post of posts) {
@@ -109,7 +169,9 @@ export async function readJsonFilesInDir(dirPath: string): Promise<Thread[]> {
   for await (const entry of Deno.readDir(dirPath)) {
     if (entry.isFile && entry.name.endsWith(".json")) {
       // continue if file name is merged.json or filtered.json
-      if (entry.name === "merged.json" || entry.name === "filtered.json") continue;
+      if (entry.name === "merged.json" || entry.name === "filtered.json") {
+        continue;
+      }
       const filePath = join(dirPath, entry.name);
       const jsonContent = await Deno.readTextFile(filePath);
       const jsonData = JSON.parse(jsonContent);
@@ -420,7 +482,7 @@ export async function downloadThread(
   const thread = {
     title: "",
     url: url,
-    messages: parseThreadHTML(html),
+    messages: parseThread(html),
   };
   Deno.writeTextFileSync(path, JSON.stringify(thread));
   await sleep(3000);
