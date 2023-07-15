@@ -39,12 +39,14 @@ async function main() {
     Deno.exit(1);
   }
 
+  // スレッドのダウンロード
   if (cache) {
     console.info("スレッドキャッシュを使用します。");
   } else {
     await prepareAndDownloadThreads(id, thread);
   }
 
+  // 動画情報の取得
   const videoData = await getVideoData(id);
 
   if (!videoData) {
@@ -52,6 +54,7 @@ async function main() {
     Deno.exit(1);
   }
 
+  // 動画のダウンロード
   // check installed yt-dlp
   const p = new Deno.Command("yt-dlp", {
     args: ["--version"],
