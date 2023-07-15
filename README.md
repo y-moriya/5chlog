@@ -48,6 +48,14 @@ $ 5chlog.exe -v video_id_hogehoge
 $ deno test -A
 ```
 
+### Release
+
+- Create a pull request
+  - with a title that includes `Release`
+  - with a branch name of vX.Y.Z
+- Upon merging the PR, a release is automatically created via GitHub Actions
+  - The contents of the PR are documented on the release page
+
 ## Lisence
 
 This project is licensed under the MIT License.

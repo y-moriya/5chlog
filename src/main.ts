@@ -20,16 +20,20 @@ async function main() {
       thread: "",
       output: config.distDir,
     },
-    string: ["v", "t", "o"],
+    string: ["v", "t", "o", "s", "e"],
     alias: {
       v: "videoId",
       t: "thread",
       o: "output",
+      s: "start",
+      e: "end",
     },
   });
   const id = args.videoId as string;
   const thread = args.thread as string;
   const output = args.output as string;
+  const start = args.start as string;
+  const end = args.end as string;
 
   if (!id) {
     console.error("動画IDを指定してください。");
@@ -67,6 +71,9 @@ async function main() {
         }
       }
     }
+  } else {
+    console.error("スレッドURLが不正です。");
+    Deno.exit(1);
   }
 
   const videoData = await getVideoData(id);
@@ -121,8 +128,8 @@ async function main() {
   await merge(id);
 
   // マージされたスレッドを時間でフィルタリング
-  const from = new Date(videoData.actualStartTime);
-  const to = new Date(videoData.actualEndTime);
+  const from = new Date(start ? start : videoData.actualStartTime);
+  const to = new Date(end ? end : videoData.actualEndTime);
   await filter(id, from, to);
 
   // 結合したスレッドをXMLに変換し、xml ディレクトリに出力
