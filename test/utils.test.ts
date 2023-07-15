@@ -571,6 +571,7 @@ Deno.test("filterMessages 2", () => {
 Deno.test("readFileToList returns array of lines when file exists", async () => {
   // Arrange
   const id = "test";
+  await createDirectoryIfNotExists("list");
   // Ensure the file exists for the test
   await Deno.writeTextFile(`list/${id}.txt`, "line1\nline2\nline3");
 
@@ -584,9 +585,10 @@ Deno.test("readFileToList returns array of lines when file exists", async () => 
   await Deno.remove(`list/${id}.txt`);
 });
 
-Deno.test("readFileToList throws error when file does not exist", () => {
+Deno.test("readFileToList throws error when file does not exist", async () => {
   // Arrange
   const id = "nonexistent";
+  await createDirectoryIfNotExists("list");
 
   // Act & Assert
   assertRejects(
@@ -599,6 +601,7 @@ Deno.test("readFileToList throws error when file does not exist", () => {
 Deno.test("prepareAndDownloadThreads creates directory and downloads threads if thread string is empty", async () => {
   // Arrange
   const id = "test1";
+  await createDirectoryIfNotExists("list");
   // Ensure the thread list file exists for the test
   await Deno.writeTextFile(
     `list/${id}.txt`,
