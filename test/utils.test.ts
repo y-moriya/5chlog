@@ -1,5 +1,5 @@
 import config from "../config.ts";
-import { assert, assertEquals, assertRejects } from "../deps.ts";
+import { assert, assertEquals, assertRejects, assertThrows } from "../deps.ts";
 import { Chat, Message } from "../src/types.ts";
 import {
   convertMessagesToXmlString,
@@ -10,6 +10,7 @@ import {
   filterMessages,
   merge,
   parseThread,
+  prepareAndDownloadThreads,
   readFileToList,
   readJsonFilesInDir,
   replaceAnchorLink,
@@ -591,6 +592,72 @@ Deno.test("readFileToList throws error when file does not exist", () => {
   assertRejects(
     () => readFileToList(id),
     Error,
-    `スレッドURLファイル list/${id}.txt が見つかりませんでした。`
+    `スレッドURLファイル list/${id}.txt が見つかりませんでした。`,
+  );
+});
+
+Deno.test("prepareAndDownloadThreads creates directory and downloads threads if thread string is empty", async () => {
+  // Arrange
+  const id = "test1";
+  // Ensure the thread list file exists for the test
+  await Deno.writeTextFile(
+    `list/${id}.txt`,
+    `
+  https://eagle.5ch.net/test/read.cgi/livejupiter/1685015365
+  https://eagle.5ch.net/test/read.cgi/livejupiter/1685013838
+  https://eagle.5ch.net/test/read.cgi/livejupiter/1685012431
+`,
+  );
+
+  // Act
+  await prepareAndDownloadThreads(id, "");
+
+  // Assert
+  const files = [];
+  for await (const file of Deno.readDir(`threads/${id}`)) {
+    files.push(file);
+  }
+  assertEquals(files.length, 3); // 3 threads were in the list
+
+  // Cleanup
+  await Deno.remove(`list/${id}.txt`);
+  for await (const file of files) {
+    await Deno.remove(`threads/${id}/${file.name}`);
+  }
+  await Deno.remove(`threads/${id}`);
+});
+
+Deno.test("prepareAndDownloadThreads creates directory and downloads threads if thread string is specified", async () => {
+  // Arrange
+  const id = "test2";
+  const thread = "https://eagle.5ch.net/test/read.cgi/livejupiter/1689422622/";
+
+  // Act
+  await prepareAndDownloadThreads(id, thread);
+
+  // Assert
+  const files = [];
+  for await (const file of Deno.readDir(`threads/${id}`)) {
+    files.push(file);
+  }
+  assertEquals(files.length, 1); // Only one thread was specified
+
+  // Cleanup
+  for await (const file of files) {
+    await Deno.remove(`threads/${id}/${file.name}`);
+  }
+  await Deno.remove(`threads/${id}`);
+});
+
+Deno.test("prepareAndDownloadThreads throws error if thread URL is invalid", () => {
+  // Arrange
+  const id = "test";
+  const thread = "invalidThreadUrl"; // Replace with an invalid thread URL for your use case
+
+  // Act & Assert
+  assertRejects(
+    () => prepareAndDownloadThreads(id, thread),
+    Error,
+    "スレッドURLが不正です。",
   );
 });

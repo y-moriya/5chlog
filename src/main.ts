@@ -1,14 +1,10 @@
 import {
-  createDirectoryIfNotExists,
-  downloadThread,
-  downloadThreadsRecursively,
   downloadVideo,
   filter,
   getVideoData,
   getVideoFileNameWithoutExt,
   merge,
-  readFileToList,
-  THREAD_URL_REGEX,
+  prepareAndDownloadThreads,
   xml,
 } from "./utils.ts";
 import { parse } from "../deps.ts";
@@ -43,25 +39,10 @@ async function main() {
     Deno.exit(1);
   }
 
-  await createDirectoryIfNotExists(`threads/${id}`);
   if (cache) {
-    console.log("キャッシュを利用します。");
-  } else if (!thread) {
-    try {
-      const threads = await readFileToList(id);
-      for (const thread of threads) {
-        if (thread.match(THREAD_URL_REGEX)) {
-          await downloadThread(thread, `threads/${id}`);
-        }
-      }
-    } catch (error) {
-      console.error(error.message);
-      Deno.exit(1);
-    }
-  } else if (thread.match(THREAD_URL_REGEX)) {
-    await downloadThreadsRecursively(thread, `threads/${id}`);
+    console.info("スレッドキャッシュを使用します。");
   } else {
-    throw new Error("スレッドURLが不正です。");
+    await prepareAndDownloadThreads(id, thread);
   }
 
   const videoData = await getVideoData(id);

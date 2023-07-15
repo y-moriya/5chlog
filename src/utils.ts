@@ -524,3 +524,29 @@ export async function readFileToList(id: string): Promise<string[]> {
     }
   }
 }
+
+/**
+ * 指定したIDのディレクトリを作成し、キャッシュが有効でない場合はスレッドを読み込んでダウンロードします。
+ * @param {string} id - ディレクトリ名およびスレッドリストファイル名として使用される識別子。
+ * @param {string} thread - ダウンロードするスレッドのURL。空文字列の場合はidからスレッドリストを取得します。
+ * @throws {Error} スレッドURLが正規表現にマッチしない場合にエラーをスローします。
+ * @returns {Promise<void>}
+ */
+export async function prepareAndDownloadThreads(
+  id: string,
+  thread: string,
+): Promise<void> {
+  await createDirectoryIfNotExists(`threads/${id}`);
+  if (!thread) {
+    const threads = await readFileToList(id);
+    for (const thread of threads) {
+      if (thread.match(THREAD_URL_REGEX)) {
+        await downloadThread(thread, `threads/${id}`);
+      }
+    }
+  } else if (thread.match(THREAD_URL_REGEX)) {
+    await downloadThreadsRecursively(thread, `threads/${id}`);
+  } else {
+    throw new Error("スレッドURLが不正です。");
+  }
+}

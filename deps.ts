@@ -7,6 +7,7 @@ import {
   assert,
   assertEquals,
   assertRejects,
+  assertThrows,
 } from "https://deno.land/std@0.194.0/testing/asserts.ts";
 import { join } from "https://deno.land/std@0.181.0/path/mod.ts";
 import { basename, extname } from "https://deno.land/std@0.181.0/path/mod.ts";
@@ -18,6 +19,7 @@ export {
   assert,
   assertEquals,
   assertRejects,
+  assertThrows,
   basename,
   datetime,
   DOMParser,
