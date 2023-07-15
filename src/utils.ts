@@ -1,6 +1,13 @@
 import { NodeList } from "https://deno.land/x/deno_dom@v0.1.37/deno-dom-wasm.ts";
 import config from "../config.ts";
-import { datetime, DOMParser, Element, join, stringify } from "../deps.ts";
+import {
+  datetime,
+  DOMParser,
+  Element,
+  join,
+  readAll,
+  stringify,
+} from "../deps.ts";
 import { Chat, Message, Thread, VideoData } from "./types.ts";
 
 /**
@@ -488,4 +495,32 @@ export async function downloadThread(
   await sleep(3000);
 
   return thread.messages[0]?.message.match(THREAD_URL_REGEX) || [];
+}
+
+/**
+ * ファイルからスレッドのURLを読み込む
+ * @param id 動画ID。ファイル名に使用する
+ * @returns スレッドURLの配列
+ */
+export async function readFileToList(id: string): Promise<string[]> {
+  const threadListUrlFile = `list/${id}.txt`;
+  let file: Deno.FsFile | null = null;
+  try {
+    // open file
+    file = await Deno.open(threadListUrlFile);
+    const decoder = new TextDecoder("utf-8");
+    const data = await readAll(file);
+    const text = decoder.decode(data);
+    return text.split("\n");
+  } catch (error) {
+    throw error instanceof Deno.errors.NotFound
+      ? new Error(
+        `スレッドURLファイル ${threadListUrlFile} が見つかりませんでした。`,
+      )
+      : error;
+  } finally {
+    if (file) {
+      file.close();
+    }
+  }
 }

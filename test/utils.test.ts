@@ -1,5 +1,5 @@
 import config from "../config.ts";
-import { assert, assertEquals } from "../deps.ts";
+import { assert, assertEquals, assertRejects } from "../deps.ts";
 import { Chat, Message } from "../src/types.ts";
 import {
   convertMessagesToXmlString,
@@ -10,6 +10,7 @@ import {
   filterMessages,
   merge,
   parseThread,
+  readFileToList,
   readJsonFilesInDir,
   replaceAnchorLink,
   replaceSpan,
@@ -564,4 +565,32 @@ Deno.test("filterMessages 2", () => {
   assertEquals(filteredMes[2].time, 200);
   assertEquals(filteredMes[3].time, 300);
   assertEquals(filteredMes[4].time, 400);
+});
+
+Deno.test("readFileToList returns array of lines when file exists", async () => {
+  // Arrange
+  const id = "test";
+  // Ensure the file exists for the test
+  await Deno.writeTextFile(`list/${id}.txt`, "line1\nline2\nline3");
+
+  // Act
+  const result = await readFileToList(id);
+
+  // Assert
+  assertEquals(result, ["line1", "line2", "line3"]);
+
+  // Cleanup
+  await Deno.remove(`list/${id}.txt`);
+});
+
+Deno.test("readFileToList throws error when file does not exist", () => {
+  // Arrange
+  const id = "nonexistent";
+
+  // Act & Assert
+  assertRejects(
+    () => readFileToList(id),
+    Error,
+    `スレッドURLファイル list/${id}.txt が見つかりませんでした。`
+  );
 });

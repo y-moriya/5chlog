@@ -7,11 +7,11 @@ import {
   getVideoData,
   getVideoFileNameWithoutExt,
   merge,
+  readFileToList,
   THREAD_URL_REGEX,
   xml,
 } from "./utils.ts";
 import { parse } from "../deps.ts";
-import { readAll } from "https://deno.land/std@0.191.0/streams/read_all.ts";
 import config from "../config.ts";
 
 async function main() {
@@ -19,61 +19,49 @@ async function main() {
     default: {
       thread: "",
       output: config.distDir,
+      cache: false,
     },
-    string: ["v", "t", "o", "s", "e"],
+    string: ["v", "t", "o", "s", "e", "c"],
     alias: {
       v: "videoId",
       t: "thread",
       o: "output",
       s: "start",
       e: "end",
+      c: "cache",
     },
   });
   const id = args.videoId as string;
-  const thread = args.thread as string;
+  const thread = (args.thread as string).trim();
   const output = args.output as string;
   const start = args.start as string;
   const end = args.end as string;
+  const cache = args.cache ? true : false;
 
   if (!id) {
     console.error("動画IDを指定してください。");
     Deno.exit(1);
   }
-  const threads: string[] = [];
-  // url ex. https://eagle.5ch.net/test/read.cgi/livejupiter/1679140495/
-  if (!thread.match(THREAD_URL_REGEX)) {
-    if (thread == "cache") {
-      console.log("キャッシュを利用します。");
-    } else {
-      let threadListUrlFile;
-      // open file
-      try {
-        if (!thread) {
-          threadListUrlFile = `list/${id}.txt`;
-        } else {
-          threadListUrlFile = thread;
-        }
-        // read file
-        const file = await Deno.open(threadListUrlFile);
-        const decoder = new TextDecoder("utf-8");
-        const data = await readAll(file);
-        const text = decoder.decode(data);
-        threads.push(...text.split("\n"));
-      } catch (error) {
-        if (error instanceof Deno.errors.NotFound) {
-          console.error(
-            `スレッドURLファイル ${threadListUrlFile} が見つかりませんでした。`,
-          );
-          Deno.exit(1);
-        } else {
-          console.error(error);
-          Deno.exit(1);
+
+  await createDirectoryIfNotExists(`threads/${id}`);
+  if (cache) {
+    console.log("キャッシュを利用します。");
+  } else if (!thread) {
+    try {
+      const threads = await readFileToList(id);
+      for (const thread of threads) {
+        if (thread.match(THREAD_URL_REGEX)) {
+          await downloadThread(thread, `threads/${id}`);
         }
       }
+    } catch (error) {
+      console.error(error.message);
+      Deno.exit(1);
     }
+  } else if (thread.match(THREAD_URL_REGEX)) {
+    await downloadThreadsRecursively(thread, `threads/${id}`);
   } else {
-    console.error("スレッドURLが不正です。");
-    Deno.exit(1);
+    throw new Error("スレッドURLが不正です。");
   }
 
   const videoData = await getVideoData(id);
@@ -109,21 +97,6 @@ async function main() {
     fileName = getVideoFileNameWithoutExt(id, output);
   }
 
-  if (threads.length > 0) {
-    await createDirectoryIfNotExists(`threads/${id}`);
-    for (const thread of threads) {
-      if (thread.match(THREAD_URL_REGEX)) {
-        await downloadThread(thread, `threads/${id}`);
-      }
-    }
-  } else if (thread != "cache") {
-    const dist = `threads/${id}`;
-    await createDirectoryIfNotExists(dist);
-
-    // スレッド群を threads ディレクトリにダウンロード
-    await downloadThreadsRecursively(thread, dist);
-  }
-
   // スレッド群を結合し、merged ディレクトリに出力
   await merge(id);
 
@@ -146,4 +119,9 @@ async function main() {
   console.log(`出力先: ${output}/${fileName}.xml`);
 }
 
-await main();
+try {
+  await main();
+} catch (error) {
+  console.error(error.message);
+  Deno.exit(1);
+}
