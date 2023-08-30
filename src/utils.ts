@@ -211,6 +211,10 @@ export async function merge(videoId: string) {
  * @returns 日付でソートしてタグを削除したメッセージオブジェクトの配列
  */
 export function sortAndSanitizeMessages(messages: Message[]): Message[] {
+  if (messages.length === 0) {
+    console.info("No messages found.");
+    return messages;
+  }
   const sortedMessages = messages.sort((a, b) => {
     return new Date(a.date!).getTime() - new Date(b.date!).getTime()!;
   });
@@ -331,6 +335,13 @@ export async function downloadThreadsRecursively(
  */
 export const THREAD_URL_REGEX =
   /(https:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
+
+export const THREAD_URL_REGEX_WITHOUT_TEST_READ_CGI =
+  /(https:\/\/[^.]+\.5ch\.net\/)([^\/]+\/\d+\/?)/g;
+
+// https://bbs.jpnkn.com/test/read.cgi/hllb/1693137341/
+export const THREAD_URL_JPNKN_REGEX =
+  /https:\/\/bbs\.jpnkn\.com\/test\/read\.cgi\/([^\/]+)\/(\d+)\/?/;
 
 export const DATE_STRING_FORMAT = "YYYY/MM/dd(www) HH:mm:ss.S";
 
@@ -497,6 +508,90 @@ export async function downloadThread(
   return thread.messages[0]?.message.match(THREAD_URL_REGEX) || [];
 }
 
+export function getJsUrlFromJpnknUrl(url: string): string {
+  const match = url.match(THREAD_URL_JPNKN_REGEX);
+  if (!match) {
+    throw new Error("url parse error");
+  }
+  const board = match[1];
+  const threadId = match[2];
+  return `https://edge.jpnkn.com/p/${board}/${threadId}/js`;
+}
+
+export async function downloadThreadJpnkn(
+  url: string,
+  dist: string,
+): Promise<string[]> {
+  const regex = /\/(\d+)/;
+  const match = url.match(regex);
+  let path;
+  if (match) {
+    path = `${dist}/${match[1]}.json`;
+  } else {
+    console.error("No thread id found");
+    Deno.exit(1);
+  }
+
+  if (await fileExists(path)) {
+    console.info("download thread: skip because File exists");
+    return [];
+  }
+
+  console.info(`Jpnknスレッドをダウンロードします: ${url}`);
+  const jsUrl = getJsUrlFromJpnknUrl(url);
+  const response = await fetch(jsUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  const text = new TextDecoder("shift-jis").decode(arrayBuffer);
+  const match2 = text.match(/var dat = \('(.+)'\)/);
+  if (!match2) {
+    throw new Error("dat not found");
+  }
+  const lines = match2[1].split("\\n");
+  const match3 = lines[0].match(/<>(.+)$/);
+  const title = match3 ? match3[1] : "";
+  const thread = {
+    title: title,
+    url: url,
+    messages: lines.map((line, index) => parseLineJpnkn(line, index + 1))
+      .filter((message) => message !== null) as Message[],
+  };
+  Deno.writeTextFileSync(path, JSON.stringify(thread));
+  await sleep(3000);
+
+  return thread.messages[0]?.message.match(THREAD_URL_JPNKN_REGEX) || [];
+}
+
+export function parseLineJpnkn(
+  line: string,
+  lineNumber: number,
+): Message | null {
+  // line ex.)
+  // 名無しのホロリス </b>(ﾜｯﾁｮｲW ce8a-uy4e)<b><><>2023/08/27(日) 20:03:58.90 ID:uBTiP4EI<>さんポル<>
+  // 名無しのホロリス </b>(ﾜｯﾁｮｲW 6726-44QY)<b><>sage<>2023/08/27(日) 20:04:00.79 ID:Xo7lzOf1<>へい！<>
+  const regex = /(.+)<\/b>\((.+)\)<b><>(.*)<>(.*) (ID:[^<]*)<>(.*)/;
+  const match = line.match(regex);
+  if (!match) {
+    // しばしば 4001 などの不要なレスのため、エラーにはしない
+    console.error(`line parse error: ${line}`);
+    return null;
+  }
+
+  const dateStr = match[4] + "0"; // ptera はミリ秒を3桁で認識するので 0 で埋める
+  const dateObj = datetime().parse(dateStr, DATE_STRING_FORMAT, {
+    locale: "ja",
+  }).toJSDate();
+
+  return {
+    "data-userid": match[5],
+    "data-id": lineNumber.toString(),
+    "name": match[1].trim(),
+    "dateStr": dateStr,
+    "date": dateObj,
+    "time": 0,
+    "message": match[6].replaceAll("<br>", "\n").trim().replace(/<>$/, ""),
+  };
+}
+
 /**
  * ファイルからスレッドのURLを読み込む
  * @param id 動画ID。ファイル名に使用する
@@ -511,7 +606,9 @@ export async function readFileToList(id: string): Promise<string[]> {
     const decoder = new TextDecoder("utf-8");
     const data = await readAll(file);
     const text = decoder.decode(data);
-    return text.split("\n");
+    const split = text.split("\n");
+    const filtered = split.filter((url) => url !== "").map((url) => url.trim());
+    return filtered;
   } catch (error) {
     throw error instanceof Deno.errors.NotFound
       ? new Error(
@@ -537,16 +634,63 @@ export async function prepareAndDownloadThreads(
   thread: string,
 ): Promise<void> {
   await createDirectoryIfNotExists(`threads/${id}`);
-  if (!thread) {
-    const threads = await readFileToList(id);
-    for (const thread of threads) {
-      if (thread.match(THREAD_URL_REGEX)) {
-        await downloadThread(thread, `threads/${id}`);
-      }
-    }
-  } else if (thread.match(THREAD_URL_REGEX)) {
-    await downloadThreadsRecursively(thread, `threads/${id}`);
-  } else {
-    throw new Error("スレッドURLが不正です。");
+
+  if (thread) {
+    await validateAndDownloadThreadRecursively(thread, `threads/${id}`);
+    return;
   }
+
+  const threads = await readFileToList(id);
+  for (const th of threads) {
+    await validateAndDownloadThread(th, `threads/${id}`);
+  }
+}
+
+export async function validateAndDownloadThread(thread: string, dir: string) {
+  if (thread.match(THREAD_URL_REGEX)) {
+    await downloadThread(thread, dir);
+    return;
+  }
+  if (thread.match(THREAD_URL_JPNKN_REGEX)) {
+    await downloadThreadJpnkn(thread, dir);
+    return;
+  }
+
+  const match = thread.match(THREAD_URL_REGEX_WITHOUT_TEST_READ_CGI);
+  if (match) {
+    const url = `${match[1]}test/read.cgi/${match[2]}`;
+    await downloadThread(url, dir);
+    return;
+  }
+
+  throw new Error(`スレッドURLが不正です: ${thread}`);
+}
+
+export async function validateAndDownloadThreadRecursively(
+  thread: string,
+  dir: string,
+) {
+  if (thread.match(THREAD_URL_REGEX)) {
+    await downloadThreadsRecursively(thread, dir);
+    return;
+  }
+
+  if (thread.match(THREAD_URL_JPNKN_REGEX)) {
+    await downloadThreadsRecursively(
+      thread,
+      dir,
+      new Set(),
+      downloadThreadJpnkn,
+    );
+    return;
+  }
+
+  const match = thread.match(THREAD_URL_REGEX_WITHOUT_TEST_READ_CGI);
+  if (match) {
+    const url = `${match[1]}test/read.cgi/${match[2]}`;
+    await downloadThreadsRecursively(url, dir);
+    return;
+  }
+
+  throw new Error(`スレッドURLが不正です: ${thread}`);
 }

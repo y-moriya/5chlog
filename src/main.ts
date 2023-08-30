@@ -103,9 +103,4 @@ async function main() {
   console.log(`出力先: ${output}/${fileName}.xml`);
 }
 
-try {
-  await main();
-} catch (error) {
-  console.error(error.message);
-  Deno.exit(1);
-}
+await main();
