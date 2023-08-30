@@ -336,9 +336,6 @@ export async function downloadThreadsRecursively(
 export const THREAD_URL_REGEX =
   /(https:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
 
-export const THREAD_URL_REGEX_WITHOUT_TEST_READ_CGI =
-  /(https:\/\/[^.]+\.5ch\.net\/)([^\/]+\/\d+\/?)/g;
-
 // https://bbs.jpnkn.com/test/read.cgi/hllb/1693137341/
 export const THREAD_URL_JPNKN_REGEX =
   /https:\/\/bbs\.jpnkn\.com\/test\/read\.cgi\/([^\/]+)\/(\d+)\/?/;
@@ -656,13 +653,6 @@ export async function validateAndDownloadThread(thread: string, dir: string) {
     return;
   }
 
-  const match = thread.match(THREAD_URL_REGEX_WITHOUT_TEST_READ_CGI);
-  if (match) {
-    const url = `${match[1]}test/read.cgi/${match[2]}`;
-    await downloadThread(url, dir);
-    return;
-  }
-
   throw new Error(`スレッドURLが不正です: ${thread}`);
 }
 
@@ -682,13 +672,6 @@ export async function validateAndDownloadThreadRecursively(
       new Set(),
       downloadThreadJpnkn,
     );
-    return;
-  }
-
-  const match = thread.match(THREAD_URL_REGEX_WITHOUT_TEST_READ_CGI);
-  if (match) {
-    const url = `${match[1]}test/read.cgi/${match[2]}`;
-    await downloadThreadsRecursively(url, dir);
     return;
   }
 
