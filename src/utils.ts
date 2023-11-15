@@ -585,8 +585,13 @@ export function parseLineJpnkn(
     "dateStr": dateStr,
     "date": dateObj,
     "time": 0,
-    "message": match[6].replaceAll("<br>", "\n").trim().replace(/<>$/, ""),
+    "message": convertMessageJpnkn(match[6]),
   };
+}
+
+function convertMessageJpnkn(message: string): string {
+  return new DOMParser().parseFromString(message.replaceAll("<br>", "\n").trim().replace(/<>$/, ""), "text/html")!
+          .documentElement!.textContent.replaceAll("\\", "");
 }
 
 /**

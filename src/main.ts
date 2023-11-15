@@ -87,6 +87,8 @@ async function main() {
   // マージされたスレッドを時間でフィルタリング
   const from = new Date(start ? start : videoData.actualStartTime);
   const to = new Date(end ? end : videoData.actualEndTime);
+  console.log({from});
+  console.log({to});
   await filter(id, from, to);
 
   // 結合したスレッドをXMLに変換し、xml ディレクトリに出力

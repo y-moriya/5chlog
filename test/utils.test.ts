@@ -664,12 +664,13 @@ Deno.test("validateAndDownloadThread throws error if thread URL is invalid", asy
   );
 });
 
-Deno.test("downloadThreadJpnkn test", async () => {
-  const url = "https://bbs.jpnkn.com/test/read.cgi/hllb/1693134231/";
-  const dist = "test_output";
-  await createDirectoryIfNotExists(dist);
-  const result = await downloadThreadJpnkn(url, dist);
-  assertEquals(result.length, 0);
-  // delete test data
-  await Deno.remove(`${dist}/1693134231.json`);
-});
+// jpnknはログがすぐにdat落ちするため、テストをスキップ
+// Deno.test("downloadThreadJpnkn test", async () => {
+//   const url = "https://bbs.jpnkn.com/test/read.cgi/hllb/1698922643/";
+//   const dist = "test_output";
+//   await createDirectoryIfNotExists(dist);
+//   const result = await downloadThreadJpnkn(url, dist);
+//   assertEquals(result.length, 0);
+//   // delete test data
+//   await Deno.remove(`${dist}/1698922643.json`);
+// });
