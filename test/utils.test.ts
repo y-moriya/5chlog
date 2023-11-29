@@ -5,12 +5,10 @@ import {
   convertMessagesToXmlString,
   convertMessageToXmlChatObj,
   createDirectoryIfNotExists,
-  downloadThreadJpnkn,
   downloadThreadsRecursively,
   fileExists,
   filterMessages,
   merge,
-  parseThread,
   prepareAndDownloadThreads,
   readFileToList,
   readJsonFilesInDir,
@@ -30,50 +28,6 @@ Deno.test("sleep function", async () => {
   // Check if the elapsed time is greater than or equal to 1000ms
   // and less than 1000ms + some allowed margin (e.g., 50ms) to account for any delay.
   assertEquals(elapsedTime >= 1000 && elapsedTime < 1050, true);
-});
-
-Deno.test("parseThreadHTML function", () => {
-  const html = `
-    <!DOCTYPE html>
-    <html>
-      <body>
-        <div class="post" data-userid="ID:M6l/2SqX0" data-id="1">
-          <div class="name">User 1</div>
-          <div class="date">2023/03/18(土) 20:55:13.15</div>
-          <div class="message"><span class="escaped">Message 1<br>Line 2</span></div>
-          </div>
-          <div class="post" data-userid="ID:M6l/2SqX1" data-id="2">
-          <div class="name">User 2</div>
-          <div class="date">2023/03/18(土) 20:56:14.16</div>
-          <div class="message"><span class="escaped">Message 2</span></div>
-        </div>
-      </body>
-    </html>
-    `;
-
-  const expectedResult: Message[] = [
-    {
-      "data-userid": "ID:M6l/2SqX0",
-      "data-id": "1",
-      name: "User 1",
-      dateStr: "2023/03/18(土) 20:55:13.150",
-      date: new Date("2023-03-18T11:55:13.150Z"),
-      time: 0,
-      message: "Message 1\nLine 2",
-    },
-    {
-      "data-userid": "ID:M6l/2SqX1",
-      "data-id": "2",
-      name: "User 2",
-      dateStr: "2023/03/18(土) 20:56:14.160",
-      date: new Date("2023-03-18T11:56:14.160Z"),
-      time: 0,
-      message: "Message 2",
-    },
-  ];
-
-  const result = parseThread(html);
-  assertEquals(result, expectedResult);
 });
 
 Deno.test("createDirectoryIfNotExists function", async () => {
