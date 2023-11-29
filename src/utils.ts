@@ -21,19 +21,34 @@ export function sleep(ms: number): Promise<void> {
 
 /**
  * 5chのスレッドHTMLから各書き込みをパースして配列にして返却する
- * @param html 5chのスレッドHTML
- * @returns メッセージオブジェクトの配列
+ * @param url 対象のスレッドURL
+ * @returns Threadオブジェクト
  */
-export function parseThread(html: string): Message[] {
+export async function parseThread(url: string): Promise<Thread> {
+  const result: Thread = {
+    title: "",
+    url: url,
+    messages: [],
+  };
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  const html = new TextDecoder("shift-jis").decode(arrayBuffer);
   const doc = new DOMParser().parseFromString(html, "text/html")!;
+  const title = doc.querySelector("title")!;
+  result.title = title.textContent?.trim() || "";
   const articles = doc.querySelectorAll("article");
   if (articles.length) {
-    return parseThreadHTMLNew(articles);
+    result.messages = parseThreadHTMLNew(articles);
+    console.info(`DL: ${url}, ${result.title}}`);
+    return result;
   }
   const posts = doc.querySelectorAll(".post");
   if (posts.length) {
-    return parseThreadHTMLOld(posts);
+    result.messages = parseThreadHTMLOld(posts);
+    console.info(`DL: ${url}, ${result.title}}`);
+    return result;
   }
+
   throw new Error("スレッドのパースに失敗しました。");
 }
 
@@ -490,19 +505,11 @@ export async function downloadThread(
     return [];
   }
 
-  console.info(`スレッドをダウンロードします: ${url}`);
-  const response = await fetch(url);
-  const arrayBuffer = await response.arrayBuffer();
-  const html = new TextDecoder("shift-jis").decode(arrayBuffer);
-  const thread = {
-    title: "",
-    url: url,
-    messages: parseThread(html),
-  };
+  const thread = await parseThread(url);
   Deno.writeTextFileSync(path, JSON.stringify(thread));
   await sleep(3000);
 
-  return thread.messages[0]?.message.match(THREAD_URL_REGEX) || [];
+  return thread.messages![0]?.message.match(THREAD_URL_REGEX) || [];
 }
 
 export function getJsUrlFromJpnknUrl(url: string): string {
@@ -590,8 +597,11 @@ export function parseLineJpnkn(
 }
 
 function convertMessageJpnkn(message: string): string {
-  return new DOMParser().parseFromString(message.replaceAll("<br>", "\n").trim().replace(/<>$/, ""), "text/html")!
-          .documentElement!.textContent.replaceAll("\\", "");
+  return new DOMParser().parseFromString(
+    message.replaceAll("<br>", "\n").trim().replace(/<>$/, ""),
+    "text/html",
+  )!
+    .documentElement!.textContent.replaceAll("\\", "");
 }
 
 /**

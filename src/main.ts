@@ -87,8 +87,8 @@ async function main() {
   // マージされたスレッドを時間でフィルタリング
   const from = new Date(start ? start : videoData.actualStartTime);
   const to = new Date(end ? end : videoData.actualEndTime);
-  console.log({from});
-  console.log({to});
+  console.info({ from });
+  console.info({ to });
   await filter(id, from, to);
 
   // 結合したスレッドをXMLに変換し、xml ディレクトリに出力
@@ -99,10 +99,10 @@ async function main() {
   Deno.renameSync(`${output}/${id}.xml`, `${output}/${fileName}.xml`);
 
   // log complete
-  console.log("完了しました。");
+  console.info("完了しました。");
 
   // log output path
-  console.log(`出力先: ${output}/${fileName}.xml`);
+  console.info(`出力先: ${output}/${fileName}.xml`);
 }
 
 await main();
