@@ -349,11 +349,11 @@ export async function downloadThreadsRecursively(
  * 5chのスレッドURLにマッチする正規表現
  */
 export const THREAD_URL_REGEX =
-  /(https:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
+  /(https?:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
 
 // https://bbs.jpnkn.com/test/read.cgi/hllb/1693137341/
 export const THREAD_URL_JPNKN_REGEX =
-  /https:\/\/bbs\.jpnkn\.com\/test\/read\.cgi\/([^\/]+)\/(\d+)\/?/;
+  /https?:\/\/bbs\.jpnkn\.com\/test\/read\.cgi\/([^\/]+)\/(\d+)\/?/;
 
 export const DATE_STRING_FORMAT = "YYYY/MM/dd(www) HH:mm:ss.S";
 
@@ -400,6 +400,11 @@ export function convertMessagesToXmlString(messages: Message[]): string {
     ) {
       continue;
     }
+    // 簡易スクリプト対応
+    // // 漢字6文字以上のコメントはスキップ
+    // if (messages[i].message.match(/[\u4E00-\u9FFF]{6,}/)) {
+    //   continue;
+    // }
     chats.push(convertMessageToXmlChatObj(messages[i], i + 1));
   }
 
@@ -451,13 +456,11 @@ export async function downloadVideo(
 ): Promise<number> {
   const p = new Deno.Command("yt-dlp", {
     args: [videoId, "-o", `${dir}/${videoId}_%(title)s.%(ext)s`],
-    stdin: "piped",
-    stdout: "piped",
+    stdin: "inherit",
+    stdout: "inherit",
   }).spawn();
 
-  const { code, stdout } = await p.output();
-
-  console.info(new TextDecoder().decode(stdout));
+  const { code } = await p.output();
 
   return code;
 }
@@ -500,11 +503,6 @@ export async function downloadThread(
     Deno.exit(1);
   }
 
-  if (await fileExists(path)) {
-    console.info("download thread: skip because File exists");
-    return [];
-  }
-
   const thread = await parseThread(url);
   Deno.writeTextFileSync(path, JSON.stringify(thread));
   await sleep(3000);
@@ -536,12 +534,6 @@ export async function downloadThreadJpnkn(
     Deno.exit(1);
   }
 
-  if (await fileExists(path)) {
-    console.info("download thread: skip because File exists");
-    return [];
-  }
-
-  console.info(`Jpnknスレッドをダウンロードします: ${url}`);
   const jsUrl = getJsUrlFromJpnknUrl(url);
   const response = await fetch(jsUrl);
   const arrayBuffer = await response.arrayBuffer();
@@ -551,8 +543,9 @@ export async function downloadThreadJpnkn(
     throw new Error("dat not found");
   }
   const lines = match2[1].split("\\n");
-  const match3 = lines[0].match(/<>(.+)$/);
+  const match3 = lines[0].match(/.*<>(.+)$/);
   const title = match3 ? match3[1] : "";
+  console.info(`Jpnknスレッドをダウンロードします: ${url}, ${title}`);
   const thread = {
     title: title,
     url: url,

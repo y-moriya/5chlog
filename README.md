@@ -74,6 +74,7 @@ $ deno test -A
 - Create a pull request
   - with a title that includes `Release`
   - with a branch name of vX.Y.Z
+  - with updating .version file
 - Upon merging the PR, a release is automatically created via GitHub Actions
   - The contents of the PR are documented on the release page
 
