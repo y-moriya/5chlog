@@ -16,6 +16,7 @@ async function main() {
       thread: "",
       output: config.distDir,
       cache: false,
+      noVideo: false,
     },
     string: ["v", "t", "o", "s", "e", "c", "n"],
     alias: {
@@ -55,15 +56,17 @@ async function main() {
   if (noVideo) {
     console.info("動画のダウンロードをスキップします。");
     if (!start || !end) {
-      console.error("動画ダウンロードをスキップする場合、開始時間と終了時間を指定してください。");
+      console.error(
+        "動画ダウンロードをスキップする場合、開始時間と終了時間を指定してください。",
+      );
       Deno.exit(1);
     }
 
     from = new Date(start);
     to = new Date(end);
-    fileName = `${id}_${from.getFullYear()}-${from.getMonth() + 1}-${from.getDate()}-${from.getHours()}-${from.getMinutes()}-${from.getSeconds()}`;
+    fileName = `${id}_${from.getFullYear()}-${from.getMonth() + 1
+      }-${from.getDate()}-${from.getHours()}-${from.getMinutes()}-${from.getSeconds()}`;
   } else {
-
     // 動画情報の取得
     const videoData = await getVideoData(id);
 

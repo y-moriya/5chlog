@@ -352,8 +352,11 @@ export const THREAD_URL_REGEX =
   /(https?:\/\/[^.]+\.5ch\.net\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
 
 // https://bbs.jpnkn.com/test/read.cgi/hllb/1693137341/
-export const THREAD_URL_JPNKN_REGEX =
+export const THREAD_URL_JPNKN_REGEX1 =
   /https?:\/\/bbs\.jpnkn\.com\/test\/read\.cgi\/([^\/]+)\/(\d+)\/?/;
+
+export const THREAD_URL_JPNKN_REGEX2 =
+  /(https?:\/\/bbs\.jpnkn\.com\/test\/read\.cgi\/[^\/]+\/\d+\/?)/g;
 
 export const DATE_STRING_FORMAT = "YYYY/MM/dd(www) HH:mm:ss.S";
 
@@ -511,7 +514,7 @@ export async function downloadThread(
 }
 
 export function getJsUrlFromJpnknUrl(url: string): string {
-  const match = url.match(THREAD_URL_JPNKN_REGEX);
+  const match = url.match(THREAD_URL_JPNKN_REGEX1);
   if (!match) {
     throw new Error("url parse error");
   }
@@ -555,7 +558,10 @@ export async function downloadThreadJpnkn(
   Deno.writeTextFileSync(path, JSON.stringify(thread));
   await sleep(3000);
 
-  return thread.messages[0]?.message.match(THREAD_URL_JPNKN_REGEX) || [];
+  const nextThreadUrlMatch = thread.messages[0]?.message.match(
+    THREAD_URL_JPNKN_REGEX2,
+  );
+  return nextThreadUrlMatch || [];
 }
 
 export function parseLineJpnkn(
@@ -656,7 +662,7 @@ export async function validateAndDownloadThread(thread: string, dir: string) {
     await downloadThread(thread, dir);
     return;
   }
-  if (thread.match(THREAD_URL_JPNKN_REGEX)) {
+  if (thread.match(THREAD_URL_JPNKN_REGEX1)) {
     await downloadThreadJpnkn(thread, dir);
     return;
   }
@@ -673,7 +679,7 @@ export async function validateAndDownloadThreadRecursively(
     return;
   }
 
-  if (thread.match(THREAD_URL_JPNKN_REGEX)) {
+  if (thread.match(THREAD_URL_JPNKN_REGEX1)) {
     await downloadThreadsRecursively(
       thread,
       dir,
