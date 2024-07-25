@@ -30,7 +30,11 @@ export async function parseThread(url: string): Promise<Thread> {
     url: url,
     messages: [],
   };
-  const response = await fetch(url);
+  const response = await fetch(url, {
+    headers: {
+      cookie: "5chClassic=on",
+    },
+  });
   const arrayBuffer = await response.arrayBuffer();
   const html = new TextDecoder("shift-jis").decode(arrayBuffer);
   const doc = new DOMParser().parseFromString(html, "text/html")!;
