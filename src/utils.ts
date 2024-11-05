@@ -110,13 +110,12 @@ export function parseThreadHTMLOld(posts: NodeList): Message[] {
   for (const post of posts) {
     try {
       const p = post as Element;
-      const name = p.querySelector(".name")!;
+      const name = p.querySelector(".postusername")!;
       const date = p.querySelector(".date")!;
-      const message = p.querySelector(".message")!;
-      const escapedSpan = message.querySelector(".escaped")!;
+      const message = p.querySelector(".post-content")!;
 
       // Replace <br> tags with \n
-      const messageText = escapedSpan.innerHTML.replace(/<br>/g, "\n").trim();
+      const messageText = message.innerHTML.replace(/<br>/g, "\n").trim();
 
       const dateStr = date.textContent?.trim() + "0"; // ptera はミリ秒を3桁で認識するので 0 で埋める
       const dateObj = datetime().parse(dateStr, DATE_STRING_FORMAT, {
